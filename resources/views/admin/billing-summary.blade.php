@@ -1,3 +1,4 @@
+
 <x-admin-layout>
     <!-- Header -->
     <div class="bg-white border-b border-gray-100 shadow-sm">
