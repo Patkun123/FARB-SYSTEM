@@ -393,6 +393,7 @@
         </div>
     </div>
 </main>
+<!-- (the long HTML you provided remains unchanged until the <script> tag) -->
 <script>
     function billingApp() {
         return {
@@ -513,7 +514,21 @@
                     this.dayTags.splice(newLen);
                 }
 
-                this.computeAllFromDaily();
+                // After adjusting day arrays, re-distribute employee daily breakdowns from totals
+                this.employees.forEach(emp => {
+                    // make sure daily array has proper length
+                    if (!emp.daily) emp.daily = [];
+                    if (emp.daily.length < newLen) {
+                        for (let k = emp.daily.length; k < newLen; k++)
+                            emp.daily.push(0);
+                    } else if (emp.daily.length > newLen) {
+                        emp.daily.splice(newLen);
+                    }
+                    this.computeDailyFromTotals(emp);
+                    // keep totals coherent after redistribution
+                    this.computeFromDailyForEmployee(emp);
+                });
+
                 this.saveHistory();
             },
 
@@ -574,6 +589,7 @@
                 if (emp.daily[dIndex] == null) emp.daily[dIndex] = 0;
                 if (emp.daily[dIndex] < 0) emp.daily[dIndex] = 0;
 
+                // Update category totals based on daily edits
                 this.computeFromDailyForEmployee(emp);
                 this.saveHistory();
             },
@@ -581,11 +597,18 @@
             // When a tag changes for a date
             onTagChange(dIndex) {
                 if (!this.dayTags[dIndex]) this.dayTags[dIndex] = 'regular';
-                this.computeAllFromDaily();
+
+                // For tag changes, redistribute daily breakdowns from employee totals
+                this.employees.forEach(emp => {
+                    this.computeDailyFromTotals(emp);
+                    // then recompute totals from the newly distributed daily (keeps rounding consistent)
+                    this.computeFromDailyForEmployee(emp);
+                });
+
                 this.saveHistory();
             },
 
-            // Compute reg_hr, ot, np, hpnp, reg_hol, spec_hol for an employee
+            // Compute reg_hr, ot, np, hpnp, reg_hol, spec_hol for an employee from emp.daily
             computeFromDailyForEmployee(emp) {
                 emp.reg_hr = 0;
                 emp.ot = 0;
@@ -621,8 +644,106 @@
                 emp.spec_hol = Math.round((emp.spec_hol || 0) * 10) / 10;
             },
 
+            // NEW: distribute employee totals into the emp.daily array evenly across matching days
+            computeDailyFromTotals(emp) {
+                // ensure daily matches daysRange length
+                const days = this.daysRange();
+                const n = days.length;
+                if (!emp.daily) emp.daily = [];
+                if (emp.daily.length < n) {
+                    for (let k = emp.daily.length; k < n; k++) emp.daily.push(0);
+                } else if (emp.daily.length > n) {
+                    emp.daily.splice(n);
+                }
+
+                // reset daily
+                for (let i = 0; i < n; i++) {
+                    emp.daily[i] = 0;
+                }
+
+                // mapping of fields to dayTags that receive those hours
+                const mapping = {
+                    reg_hr: ['regular'],
+                    ot: ['ot'],
+                    np: ['np'],
+                    hpnp: ['hpnp'],
+                    reg_hol: ['holiday'],
+                    spec_hol: ['special_holiday']
+                };
+
+                // helper to distribute 'hours' across indices in 'indices' evenly at 0.1 precision
+                const distributeTenths = (indices, hours) => {
+                    const result = {};
+                    if (!indices || indices.length === 0) return result;
+
+                    const totalTenths = Math.round(Number(hours || 0) * 10); // tenths to keep one decimal precision exact
+                    if (totalTenths <= 0) {
+                        indices.forEach(idx => result[idx] = 0);
+                        return result;
+                    }
+                    const baseTenths = Math.floor(totalTenths / indices.length);
+                    let remainderTenths = totalTenths - baseTenths * indices.length;
+
+                    indices.forEach((idx, i) => {
+                        const add = baseTenths + (remainderTenths > 0 ? 1 : 0);
+                        if (remainderTenths > 0) remainderTenths--;
+                        result[idx] = add / 10;
+                    });
+
+                    return result;
+                };
+
+                // For each category, find matching day indices and add distributed amounts to daily
+                Object.keys(mapping).forEach(field => {
+                    const fieldHours = Number(emp[field] || 0);
+                    if (fieldHours <= 0) return;
+
+                    // find day indices that match mapping[field]
+                    let indices = [];
+                    for (let d = 0; d < this.dayTags.length; d++) {
+                        if (mapping[field].includes(this.dayTags[d])) indices.push(d);
+                    }
+
+                    // fallback: if no specific tags found for this field, try 'regular' days
+                    if (indices.length === 0) {
+                        for (let d = 0; d < this.dayTags.length; d++) {
+                            if (this.dayTags[d] === 'regular') indices.push(d);
+                        }
+                    }
+
+                    // fallback 2: if still none found, use all days
+                    if (indices.length === 0) {
+                        for (let d = 0; d < this.dayTags.length; d++) indices.push(d);
+                    }
+
+                    const distributed = distributeTenths(indices, fieldHours);
+                    Object.keys(distributed).forEach(idx => {
+                        emp.daily[idx] += distributed[idx];
+                    });
+                });
+
+                // Round daily values to one decimal for display consistency
+                for (let i = 0; i < emp.daily.length; i++) {
+                    emp.daily[i] = Math.round((Number(emp.daily[i] || 0)) * 10) / 10;
+                }
+            },
+
             computeAllFromDaily() {
                 this.employees.forEach(emp => this.computeFromDailyForEmployee(emp));
+            },
+
+            // Called when user edits fields in the Employees table (reg_hr, ot, etc)
+            onEmployeeTableInput(emp, field) {
+                if (emp[field] == null) emp[field] = 0;
+                if (emp[field] < 0) emp[field] = 0;
+
+                // Recompute daily breakdown based on updated totals
+                this.computeDailyFromTotals(emp);
+
+                // Recompute totals based on daily to keep rounding behavior consistent
+                this.computeFromDailyForEmployee(emp);
+
+                this.saveHistory();
             },
 
             totalHours(emp) {
@@ -696,6 +817,7 @@
                     daily: dailyInit
                 });
 
+                // compute totals from daily
                 this.computeFromDailyForEmployee(this.employees[this.employees.length - 1]);
                 this.saveHistory();
             },
@@ -708,4 +830,6 @@
     }
 </script>
 </x-admin-layout>
+
+
 
