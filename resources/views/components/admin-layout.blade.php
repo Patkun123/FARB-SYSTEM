@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Admin Panel</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script src="//unpkg.com/alpinejs" defer></script>
+
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 <!-- }
@@ -52,7 +52,7 @@
           {{ $slot }}
     </main>
 </div>
-
+<script src="//unpkg.com/alpinejs" defer></script>
 </body>
 
 </html>
