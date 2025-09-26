@@ -132,6 +132,9 @@
                                         <template x-for="(day, dIndex) in daysRange()" :key="dIndex">
                                             <th class="border px-2 py-1 sticky top-0 bg-gray-100 z-10" x-text="day"></th>
                                         </template>
+
+                                        <!-- NEW: Total column header -->
+                                        <th class="border px-2 py-1 sticky top-0 bg-gray-100 z-10">Total</th>
                                     </tr>
 
                                     <!-- NOTE: Date Tag row REMOVED per requirement -->
@@ -149,6 +152,9 @@
                                                     <input type="number" step="0.1" min="0" x-model.number="emp.daily[dIndex]" @focus="saveHistory()" @input.debounce.150ms="onDailyInput(emp, dIndex)" class="w-24 text-center border-none focus:ring-0 text-sm" />
                                                 </td>
                                             </template>
+
+                                            <!-- NEW: Per-employee total column -->
+                                            <td class="border px-2 py-1 text-center font-medium" x-text="sumDaily(emp)"></td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -160,6 +166,9 @@
                                         <template x-for="(day, dIndex) in daysRange()" :key="dIndex">
                                             <td class="border px-2 py-2 text-center" x-text="(dailyTotal(dIndex)).toFixed(1)"></td>
                                         </template>
+
+                                        <!-- NEW: Grand total of all daily totals -->
+                                        <td class="border px-2 py-2 text-center" x-text="(grandDailyTotal()).toFixed(1)"></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -544,6 +553,11 @@
                         const v = Number((emp.daily && emp.daily[dIndex]) || 0);
                         return sum + v;
                     }, 0);
+                },
+
+                // NEW: grand total across all daily columns (sum of every employee's daily sum)
+                grandDailyTotal() {
+                    return this.employees.reduce((sum, emp) => sum + this.sumDaily(emp), 0);
                 },
 
                 // sum an employee's daily array
