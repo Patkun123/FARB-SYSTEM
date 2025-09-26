@@ -1,4 +1,3 @@
-
 <x-admin-layout>
     <!-- Header -->
     <div class="bg-white border-b border-gray-100 shadow-sm">
@@ -174,13 +173,23 @@
                                                     <input type="number" step="0.1"
                                                         x-model.number="emp.daily[dIndex]"
                                                         @focus="saveHistory()"
-                                                        @input.debounce.300ms="saveHistory()"
+                                                        @input.debounce.300ms="onDailyInput(emp, dIndex)"
                                                         class="w-24 text-center border-none focus:ring-0 text-sm" />
                                                 </td>
                                             </template>
                                         </tr>
                                     </template>
                                 </tbody>
+
+                                <!-- NEW: Daily Totals Row -->
+                                <tfoot class="bg-gray-100 font-bold">
+                                    <tr>
+                                        <td class="border px-2 py-2 text-right">Totals</td>
+                                        <template x-for="(day, dIndex) in daysRange()" :key="dIndex">
+                                            <td class="border px-2 py-2 text-center" x-text="(dailyTotal(dIndex)).toFixed(1)"></td>
+                                        </template>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>
@@ -389,16 +398,17 @@ function billingApp() {
                 this.endDate = next.endDate;
             }
         },
-employeeToAdd: 1, // default 1 employee
 
-addMultipleEmployees() {
-    if (this.employeeToAdd > 0) {
-        for (let i = 0; i < this.employeeToAdd; i++) {
-            this.addEmployee();
-        }
-        this.employeeToAdd = 1; // reset input
-    }
-},
+        employeeToAdd: 1, // default 1 employee
+
+        addMultipleEmployees() {
+            if (this.employeeToAdd > 0) {
+                for (let i = 0; i < this.employeeToAdd; i++) {
+                    this.addEmployee();
+                }
+                this.employeeToAdd = 1; // reset input
+            }
+        },
 
         // 🔹 Generate day range between start and end date
         daysRange() {
@@ -415,17 +425,46 @@ addMultipleEmployees() {
                 current.setDate(current.getDate() + 1);
             }
 
-            // Ensure each employee has a `daily` array sized to this range
+            // Ensure each employee has a `daily` array sized to this range while preserving existing values
             this.employees.forEach(emp => {
-                if (!emp.daily || emp.daily.length !== days.length) {
-                    emp.daily = Array(days.length).fill(0);
+                if (!emp.daily) emp.daily = [];
+                if (emp.daily.length < days.length) {
+                    for (let k = emp.daily.length; k < days.length; k++) emp.daily.push(0);
+                } else if (emp.daily.length > days.length) {
+                    emp.daily.splice(days.length); // truncate extra days if date range shrinks
                 }
             });
 
             return days;
         },
 
-        totalHours(emp) { return emp.reg_hr + emp.ot + emp.np + emp.hpnp + emp.reg_hol + emp.spec_hol; },
+        // NEW: return total hours for a specific day index across all employees
+        dailyTotal(dIndex) {
+            return this.employees.reduce((sum, emp) => {
+                const v = Number((emp.daily && emp.daily[dIndex]) || 0);
+                return sum + v;
+            }, 0);
+        },
+
+        // NEW: sum an employee's daily array
+        sumDaily(emp) {
+            if (!emp || !emp.daily) return 0;
+            return emp.daily.reduce((s, v) => s + (Number(v) || 0), 0);
+        },
+
+        // NEW: called when a daily input changes — syncs into reg_hr (at least)
+        onDailyInput(emp, dIndex) {
+            // ensure array exists
+            if (!emp.daily) emp.daily = [];
+            if (emp.daily[dIndex] == null) emp.daily[dIndex] = 0;
+            // sum daily values and write into reg_hr (rounded to 1 decimal)
+            const sum = this.sumDaily(emp);
+            emp.reg_hr = Math.round(sum * 10) / 10;
+            // save history (debounced)
+            this.saveHistory();
+        },
+
+        totalHours(emp) { return (emp.reg_hr || 0) + (emp.ot || 0) + (emp.np || 0) + (emp.hpnp || 0) + (emp.reg_hol || 0) + (emp.spec_hol || 0); },
         totalPay(emp) {
             const r = this.rates;
             const c = emp.useCustom ? emp.customRates : {};
@@ -439,7 +478,26 @@ addMultipleEmployees() {
         columnTotal(field) { return this.employees.reduce((sum, emp) => sum + (emp[field] || 0), 0); },
         grandTotal() { return this.employees.reduce((sum, emp) => sum + this.totalPay(emp), 0); },
         currency(val) { return '₱' + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
-        addEmployee() { this.employees.push({ name: "", reg_hr: 0, ot: 0, np: 0, hpnp: 0, reg_hol: 0, spec_hol: 0, useCustom: false, customRates: {}, daily: [] }); this.saveHistory(); },
+
+        addEmployee() {
+            // initialize daily array sized to current daysRange to keep consistent
+            const daysCount = this.startDate && this.endDate ? this.daysRange().length : 0;
+            const dailyInit = new Array(daysCount).fill(0);
+            this.employees.push({
+                name: "",
+                reg_hr: 0,
+                ot: 0,
+                np: 0,
+                hpnp: 0,
+                reg_hol: 0,
+                spec_hol: 0,
+                useCustom: false,
+                customRates: {},
+                daily: dailyInit
+            });
+            this.saveHistory();
+        },
+
         deleteEmployee(i) { this.employees.splice(i, 1); this.saveHistory(); }
     };
 }
