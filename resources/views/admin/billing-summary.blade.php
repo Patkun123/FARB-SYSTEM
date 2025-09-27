@@ -16,7 +16,7 @@
 
                     <div class="hidden sm:flex sm:space-x-6">
                         <x-nav-link :href="route('admin.billing')" :active="request()->routeIs('billing')" >
-                            {{ __('Billing') }}
+                            {{ __('Billing Summary') }}
                         </x-nav-link>
                     </div>
                 </div>
@@ -30,10 +30,10 @@
     </div>
 
     <!-- Main Content -->
-    <main class="py-10 bg-gray-50 min-h-screen">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main class="py-6">
+        <div class="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white shadow-md hover:shadow-lg transition rounded-2xl p-8 border border-gray-200">
-                <h1 class="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+                <h1 class="text-1xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                     <img class="w-10 h-10" src="{{ asset('img/billing_summaries.png') }}" alt="Billing">
                     Billing Summary
                 </h1>
@@ -304,5 +304,5 @@
         </div>
     </main>
 
-    <script src="{{ asset('js/billing-summaries.js') }}"></script>
+    <script src="{{ asset('js/billing-sumarries.js') }}" ></script>
 </x-admin-layout>

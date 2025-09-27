@@ -68,10 +68,10 @@
     <div class="flex-1 flex flex-col justify-center items-center text-center space-y-6">
         <h1 class="metallic-text font-extrabold tracking-wide leading-tight
            text-1xl sm:text-2xl md:text-3xl lg:text-4xl whitespace-nowrap text-center">
-    FARB BILLING & PAYMENT SYSTEM
+    FARB MULTI-PURPOSE COOPERATIVE
 </h1>
 
-        <p class="text-lg text-gray-300 font-medium">MULTI-PURPOSE COOPERATIVE</p>
+        <p class="text-lg text-gray-300 font-medium">BILLING & PAYMENT SYSTEM</p>
         <p class="text-sm text-gray-400 italic max-w-lg">
             “Fortitude Abilities Resilience In Business Multipurpose Cooperative.”
         </p>
