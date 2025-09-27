@@ -1,3 +1,4 @@
+<?php
 // database/migrations/2025_09_27_000000_create_billing_tables.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
