@@ -46,9 +46,6 @@
                         <img class="w-10 h-10" src="{{ asset('img/invoice.png') }}" alt="Billing">
                         Invoice Manager
                     </h1>
-                    <button @click="manualSave" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg shadow hover:bg-indigo-700 transition">
-                        💾 Save Invoice
-                    </button>
                 </div>
 
                 <!-- Controls -->
@@ -139,7 +136,7 @@
                                 </tr>
                             </template>
                         </tbody>
-                       <tfoot>
+                        <tfoot>
                             <tr class="bg-gray-100 font-bold text-gray-800">
                                 <!-- Span all columns before 'Amount' -->
                                 <td colspan="8" class="border p-2 text-right">Total Amount:</td>
@@ -149,8 +146,15 @@
                                 <td class="border p-2"></td>
                             </tr>
                         </tfoot>
-
                     </table>
+                </div>
+
+                <!-- Save Button -->
+                <div class="flex justify-end mt-6">
+                    <button @click="manualSave"
+                            class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:bg-indigo-700 active:scale-95 transition transform">
+                        💾 Save Invoice
+                    </button>
                 </div>
             </div>
         </div>
