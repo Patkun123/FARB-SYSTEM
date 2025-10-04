@@ -42,23 +42,23 @@
                 Billing Summary
             </h1>
 
-            <div x-data="billingApp()" x-init="initKeyboard(); loadState()" class="space-y-10">
-            <!-- Summary Info -->
+    <div x-data="billingApp()" x-init="initKeyboard(); loadState()" class="space-y-10">
+             <!-- Summary Info -->
 
-            <section>
-                <h2 class="text-lg font-semibold text-gray-700 mb-4">Summary Info</h2>
+             <section>
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Billing Summary Info</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                     <!-- Summary Name -->
                     <div>
                         <label class="block text-sm font-medium text-gray-600">Summary Name</label>
-                        <input type="text" x-model="summaryName"
+                        <input required type="text" x-model="summaryName"
                             @focus="saveHistory()" @input.debounce.300ms="saveHistory()"
                             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring focus:ring-blue-300 text-sm" />
                     </div>
 
                     <!-- Department Name -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-600">Department Name</label>
+                        <label required class="block text-sm font-medium text-gray-600">Department Name</label>
                         <input type="text" x-model="departmentName"
                             @focus="saveHistory()" @input.debounce.300ms="saveHistory()"
                             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring focus:ring-blue-300 text-sm" />
@@ -67,21 +67,33 @@
                     <!-- Start Date -->
                     <div>
                         <label class="block text-sm font-medium text-gray-600">Start Date</label>
-                        <input type="date" x-model="startDate" @change="onDateRangeChange()"
+                        <input required type="date" x-model="startDate" @change="onDateRangeChange()"
                             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring focus:ring-blue-300 text-sm" />
                     </div>
 
                     <!-- End Date -->
                     <div>
                         <label class="block text-sm font-medium text-gray-600">End Date</label>
-                        <input type="date" x-model="endDate" @change="onDateRangeChange()"
+                        <input required type="date" x-model="endDate" @change="onDateRangeChange()"
                             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring focus:ring-blue-300 text-sm" />
                     </div>
+
+                    <!-- Button Section -->
+                    <div class="mt-4 flex items-center gap-2">
+                        <button @click="generateBreakdown()"
+                                class="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600">
+                            ➕ Breakdown by Days
+                        </button>
+                        <div x-show="dateRangeError" class="text-red-500 text-sm">
+                            ⚠ Please enter a valid Start Date and End Date where Start Date is before End Date.
+                        </div>
+                    </div>
+
                 </div>
             </section>
 
                 <!-- Global Rates -->
-                <section>
+                 <section>
                     <h2 class="text-lg font-semibold text-gray-700 mb-4">Global Rates</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-6">
                         <template x-for="(rate, key) in rates" :key="key">
@@ -139,7 +151,7 @@
                 </section>
 
                 <!-- Breakdown Days Table -->
-                <section>
+                <section x-show="breakdownReady">
                     <h2 class="text-xl font-bold mb-4">Breakdown by Days</h2>
                     <div class="overflow-x-auto border rounded-lg shadow-sm">
                         <table class="min-w-max text-sm border-collapse">
@@ -168,7 +180,7 @@
                                             </div>
                                         </th>
                                     </template>
-                                    <!-- make the TOTAL header sticky on the right -->
+                                    <!--  TOTAL header sticky on the right -->
                                     <th class="px-3 py-2 sticky right-0 top-0 bg-blue-50 z-30 text-center font-semibold w-28">Total</th>
                                 </tr>
                             </thead>
@@ -356,19 +368,77 @@
                     </div>
 
                 </section>
-                    <!-- Save Button -->
-            <div class="flex justify-end mt-6">
-                <button @click="manualSave"
-                        class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:bg-indigo-700 active:scale-95 transition transform">
-                    💾 Save
-                </button>
-            </div>
+                  <!-- Save Button -->
+                    <div class="flex justify-end mt-6" x-data="{ confirmModal: false, successModal: false }">
+                        <button
+                            type="button"
+                            @click="
+                                if (!breakdownReady) { alert('Please generate Breakdown by Days before submitting.'); return; }
+
+                                employees.forEach(emp => {
+                                    emp.dailyEntries = emp.daily.map((hours, i) => ({
+                                        hours: Number(hours || 0),
+                                        override_type: emp.dayOverrides[i] || null,
+                                        override_threshold: emp.dayThresholds[i] != null ? Number(emp.dayThresholds[i]) : null
+                                    }));
+                                    delete emp.daily;
+                                    delete emp.dayOverrides;
+                                    delete emp.dayThresholds;
+                                });
+
+                                recomputeTotals(); // <-- make totals reactive
+
+                                confirmModal = true;
+                            "
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            Save Billing Summary
+                        </button>
+
+
+                        <form x-ref="billingForm" action="{{ route('admin.billing-summary.save') }}" method="POST" class="hidden">
+                            @csrf
+                            <input type="hidden" name="summary_name" :value="summaryName">
+                            <input type="hidden" name="department_name" :value="departmentName">
+                            <input type="hidden" name="start_date" :value="startDate">
+                            <input type="hidden" name="end_date" :value="endDate">
+                            <input type="hidden" name="rates" :value="JSON.stringify(rates)">
+                            <input type="hidden" name="daysMeta" :value="JSON.stringify(daysMeta)">
+                            <input type="hidden" name="employees" :value="JSON.stringify(employees)">
+                            <input type="hidden" name="totals" :value="JSON.stringify(totals)">
+                        </form>
+
+                        <!-- Confirm Modal -->
+                        <div x-show="confirmModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                            <div class="bg-white rounded-xl shadow-lg w-96 p-6">
+                                <h2 class="text-lg font-bold mb-4">Confirm Save</h2>
+                                <p class="mb-6">Are you sure you want to save this billing summary?</p>
+                                <div class="flex justify-end gap-3">
+                                    <button @click="confirmModal = false" class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">Cancel</button>
+                                    <button @click="$refs.billingForm.submit(); confirmModal = false; successModal = true;" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Yes, Save</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Success Modal -->
+                        <div x-show="successModal" x-transition class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                            <div class="bg-white rounded-xl shadow-lg w-96 p-6 text-center">
+                                <h2 class="text-lg font-bold mb-4">Success</h2>
+                                <p class="mb-6">Billing summary saved successfully!</p>
+                                <button @click="successModal = false" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Close</button>
+                            </div>
+                        </div>
+                    </div>
+
             </div>
         </div>
 
     </div>
+
+
 </main>
 
 <script src="{{ asset('js/billing-sumarries.js') }}"></script>
+
+
 
 </x-admin-layout>

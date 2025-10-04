@@ -73,7 +73,7 @@
 
         <p class="text-lg text-gray-300 font-medium">BILLING & PAYMENT SYSTEM</p>
         <p class="text-sm text-gray-400 italic max-w-lg">
-            “Fortitude Abilities Resilience In Business Multipurpose Cooperative.”
+            “FORTITUDE ABILITY RESILIENCE IN BUSINESS MULTI-PURPOSE COOPERATIVE.”
         </p>
 
         @if (Route::has('login'))

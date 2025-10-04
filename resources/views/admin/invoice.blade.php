@@ -55,7 +55,7 @@
                                class="w-20 border-gray-300 rounded-lg p-1.5 text-right focus:ring focus:ring-indigo-200">
                         <button @click="addRow(rowsToAdd)"
                                 class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow transition">
-                            ➕ Add Row(s)
+                             Add Row(s)
                         </button>
                     </div>
 

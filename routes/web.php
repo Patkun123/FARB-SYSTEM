@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\BillingSummaryController;
+use App\Http\Controllers\Admin\BillingController;
 
 use Illuminate\Support\Facades\Auth;
 
@@ -28,18 +30,25 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('dashboard');
-    
-  // ✅ Use controller instead of closure
+
+  // CLients Management - CRUD via Controller RESTful
     Route::resource('clients', ClientController::class)->except(['show']);
 
     // Manage Billing
-    Route::get('/billing', function () {
-        return view('admin.billing');
-    })->name('billing');
+    Route::get('/billing', function () {return view('admin.billing');})->name('billing');
+    //ajax routes for clients and departments
+    Route::get('/billing/clients', [BillingController::class, 'getClients'])->name('billing.clients');
+    Route::get('/billing/departments', [BillingController::class, 'getDepartments'])->name('billing.departments');
+    //billing summaries with totals
+    Route::get('/billing/summaries', [BillingController::class, 'getBillingSummaries'])->name('billing.summaries');
 
-    Route::get('/billing-summary', function () {
-        return view('admin.billing-summary');
-    })->name('billing-summary');
+
+
+    //Billing Summary
+    Route::get('/billing-summary', function () {return view('admin.billing-summary');})->name('billing-summary');
+    // Billing Summary Save (POST)
+    Route::post('/billing-summary/save', [BillingSummaryController::class, 'store'])
+    ->name('billing-summary.save');
 
     Route::get('/invoice', function () {
         return view('admin.invoice');
