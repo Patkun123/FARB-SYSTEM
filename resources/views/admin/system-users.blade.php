@@ -11,8 +11,8 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden sm:flex sm:space-x-6">
-                    <x-nav-link :href="route('admin.billing-summary')" :active="request()->routeIs('billing-summary')">
-                        {{ __('Billing Summaries') }}
+                    <x-nav-link :href="route('admin.system-users')" :active="request()->routeIs('billing-summary')">
+                        {{ __('System Users') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -25,12 +25,12 @@
             <div class="bg-white shadow-lg rounded-2xl p-8 border border-gray-200">
                 <!-- Page Title -->
                 <h1 class="text-1xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                     <img class="w-10 h-10" src="{{ asset('img/billing_summaries.png') }}" alt="Billing"> 
-                    Billing Summaries
-                </h1>              
+                     <img class="w-10 h-10" src="{{ asset('img/billing_summaries.png') }}" alt="Billing">
+                    System Users
+                </h1>
             </div>
         </div>
     </main>
 
-   
+
 </x-admin-layout>

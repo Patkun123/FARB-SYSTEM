@@ -11,22 +11,15 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
-class RegisterUserController extends Controller
+class AdminRegisterController extends Controller
 {
-    /**
-     * Display the registration form.
-     */
     public function create(): View
     {
-        return view('admin.auth.register-user'); // ✅ Your Blade file location
+        return view('admin.register-user');
     }
 
-    /**
-     * Handle an incoming registration request.
-     */
     public function store(Request $request): RedirectResponse
     {
-        // ✅ Validate user input
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
@@ -34,7 +27,6 @@ class RegisterUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // ✅ Create new user
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -42,10 +34,9 @@ class RegisterUserController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        // ✅ Trigger Laravel's "Registered" event (if using email verification, etc.)
         event(new Registered($user));
 
-        // ✅ Redirect with success message
-        return redirect()->route('admin.system-users')->with('success', 'New user registered successfully!');
+        return redirect()->route('admin.system-users')
+            ->with('success', 'New user registered successfully!');
     }
 }

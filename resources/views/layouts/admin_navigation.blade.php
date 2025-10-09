@@ -9,7 +9,13 @@
     </div>
 
     <!-- Navigation -->
-    <div class="flex-1 overflow-y-auto px-2 py-4 " x-data="{ openBilling: {{ request()->routeIs('admin.billing*') ? 'true' : 'false' }}, openReceivables: false, openUsers: false }">
+    <div class="flex-1 overflow-y-auto px-2 py-4"
+         x-data="{
+            openBilling: {{ request()->routeIs('admin.billing*') || request()->routeIs('admin.records') ? 'true' : 'false' }},
+            openReceivables: {{ request()->routeIs('admin.receivables*') || request()->routeIs('admin.receive-payment') || request()->routeIs('admin.receivable-records') ? 'true' : 'false' }},
+            openUsers: {{ request()->routeIs('admin.auth.*') || request()->routeIs('admin.profile-settings') || request()->routeIs('admin.system-users') || request()->routeIs('admin.register-user') ? 'true' : 'false' }}
+         }">
+
         <nav class="space-y-1">
 
             <!-- Dashboard -->
@@ -32,7 +38,7 @@
             <div class="mt-4">
                 <button @click="openBilling = !openBilling"
                         class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition
-                        {{ request()->routeIs('admin.billing*') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        {{ request()->routeIs('admin.billing*') || request()->routeIs('admin.records') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
                     <span class="flex items-center gap-2">
                         <span class="w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 text-xs">M</span>
                         Manage Billing
@@ -54,9 +60,9 @@
                        {{ request()->routeIs('admin.invoice') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
                         <img class="w-5 h-5" src="{{ asset('img/invoice.png') }}" alt="Invoice"> Invoice
                     </a>
-                    <a href="{{ route('admin.invoice-records')}}" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
-                       {{ request()->routeIs('admin.invoice-records') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
-                        <img class="w-5 h-5" src="{{ asset('img/invoice_history.png') }}" alt="Invoice Records"> Invoice Records
+                    <a href="{{ route('admin.records')}}" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
+                       {{ request()->routeIs('admin.records') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <img class="w-5 h-5" src="{{ asset('img/invoice_history.png') }}" alt="Invoice Records"> Records
                     </a>
                 </div>
             </div>
@@ -65,7 +71,7 @@
             <div class="mt-4">
                 <button @click="openReceivables = !openReceivables"
                         class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition
-                        {{ request()->routeIs('admin.receivables*') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        {{ request()->routeIs('admin.receivables*') || request()->routeIs('admin.receive-payment') || request()->routeIs('admin.receivable-records') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
                     <span class="flex items-center gap-2">
                         <span class="w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 text-xs">R</span>
                         Receivables
@@ -75,8 +81,19 @@
                     </svg>
                 </button>
                 <div x-show="openReceivables" x-cloak class="mt-2 space-y-1 pl-6">
-                    <a href="#" class="block px-3 py-2 text-sm rounded-lg transition">Receivables</a>
-                    <a href="#" class="block px-3 py-2 text-sm rounded-lg transition">Receivable Reports</a>
+                    <a href="{{ route('admin.receive-payment') }}"
+                       class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
+                       {{ request()->routeIs('admin.receive-payment') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <img class="w-5 h-5" src="{{ asset('img/receive_payment.png') }}" alt="Receive Payment">
+                        Receive Payment
+                    </a>
+
+                    <a href="{{ route('admin.receivable-records') }}"
+                       class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
+                       {{ request()->routeIs('admin.receivable-records') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <img class="w-5 h-5" src="{{ asset('img/receivable_records.png') }}" alt="Receivable Records">
+                        Receivable Records
+                    </a>
                 </div>
             </div>
 
@@ -84,7 +101,7 @@
             <div class="mt-4">
                 <button @click="openUsers = !openUsers"
                         class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition
-                        {{ request()->routeIs('admin.users*') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        {{ request()->routeIs('admin.auth.*') || request()->routeIs('admin.profile-settings') || request()->routeIs('admin.system-users') || request()->routeIs('admin.register-user') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
                     <span class="flex items-center gap-2">
                         <img class="w-5 h-5" src="{{ asset('img/settings.png') }}" alt="Settings"> Settings
                     </span>
@@ -93,10 +110,25 @@
                     </svg>
                 </button>
                 <div x-show="openUsers" x-cloak class="mt-2 space-y-1 pl-6">
-                    <a href="#" class="block px-3 py-2 text-sm rounded-lg transition">Profile Settings</a>
-                    <a href="#" class="block px-3 py-2 text-sm rounded-lg transition">System Users</a>
-                    <a href="#" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition">
-                        <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-600">New</span> Register New User
+                    <a href="{{ route('admin.profile-settings') }}"
+                       class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
+                       {{ request()->routeIs('admin.profile-settings') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <img class="w-5 h-5" src="{{ asset('img/profile-settings.png') }}" alt="Profile">
+                        Profile Settings
+                    </a>
+
+                    <a href="{{ route('admin.system-users') }}"
+                       class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
+                       {{ request()->routeIs('admin.system-users') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <img class="w-5 h-5" src="{{ asset('img/system-users.png') }}" alt="Profile">
+                        System Users
+                    </a>
+
+                    <a href="{{ route('admin.register-user') }}"
+                       class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
+                       {{ request()->routeIs('admin.register-user') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-600">New</span>
+                        Register New User
                     </a>
                 </div>
             </div>
@@ -105,7 +137,7 @@
     </div>
 
     <!-- Logout Button -->
-    <div class="px-4 py-3 ">
+    <div class="px-4 py-3">
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-red-600 hover:bg-red-50 transition">
@@ -117,16 +149,15 @@
         </form>
     </div>
 
-<!-- Footer -->
-<div class="px-4 py-4 border-t bg-gray-50 flex flex-col gap-2">
-    <div class="flex items-center gap-3">
-        <img src="{{ asset('img/logo_trans.png') }}" alt="logo" class="w-10 h-10">
-        <div class="flex flex-col">
-            <p class="text-xs font-semibold text-gray-800">FARB SYSTEM</p>
-            <p class="text-[11px] text-gray-500">Multi Purpose Cooperative</p>
+    <!-- Footer -->
+    <div class="px-4 py-4 border-t bg-gray-50 flex flex-col gap-2">
+        <div class="flex items-center gap-3">
+            <img src="{{ asset('img/logo_trans.png') }}" alt="logo" class="w-10 h-10">
+            <div class="flex flex-col">
+                <p class="text-xs font-semibold text-gray-800">FARB SYSTEM</p>
+                <p class="text-[11px] text-gray-500">Multi Purpose Cooperative</p>
+            </div>
         </div>
+        <p class="text-[10px] text-gray-400 mt-2">© {{ date('Y') }} FARB SYSTEM. All rights reserved.</p>
     </div>
-    <p class="text-[10px] text-gray-400 mt-2">© {{ date('Y') }} FARB SYSTEM. All rights reserved.</p>
-</div>
-
 </aside>

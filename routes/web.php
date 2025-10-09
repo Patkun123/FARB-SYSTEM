@@ -5,7 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\BillingSummaryController;
 use App\Http\Controllers\Admin\BillingController;
-
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\Auth\AdminRegisterController;
 use Illuminate\Support\Facades\Auth;
 
 // Public
@@ -54,31 +56,48 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         return view('admin.invoice');
     })->name('invoice');
 
-    Route::get('/invoice-records', function () {
-        return view('admin.invoice-records');
-    })->name('invoice-records');
+    Route::get('/records', function () {
+        return view('admin.records');
+    })->name('records');
 
-    // Receivables
-    Route::get('/receivables', function () {
-        return view('admin.receivables');
-    })->name('receivables');
+      // Receivables
 
-    Route::get('/receivable-reports', function () {
-        return view('admin.receivable-reports');
-    })->name('receivables.reports');
+        Route::get('/receive-payment', function () {
+            return view('admin.receive-payment');
+        })->name('receive-payment');
+
+        Route::get('/receivable-records', function () {
+            return view('admin.receivable-records');
+        })->name('receivable-records');
+
 
     // Settings / Users
-    Route::get('/profile-settings', function () {
-        return view('admin.profile-settings');
-    })->name('profile.settings');
 
+
+Route::get('/auth/profile-settings', function () {
+    $user = Auth::user(); // get currently logged-in user
+    return view('admin.auth.profile-settings', compact('user'));
+})->name('profile-settings');
+
+
+    //MANAGE
     Route::get('/system-users', function () {
         return view('admin.system-users');
     })->name('system.users');
+    Route::get('/system-users', function () {
+    return view('admin.system-users');
+    })->name('system-users');
 
-    Route::get('/register-user', function () {
-        return view('admin.register-user');
-    })->name('register.user');
+    // Admin Register New User
+  Route::get('/register-user', [AdminRegisterController::class, 'create'])
+    ->name('register-user');
+    Route::post('/register-user', [AdminRegisterController::class, 'store'])
+        ->name('register-user.store');
+
+
+
+
+
 });
 
 
