@@ -50,11 +50,11 @@
                 <div x-show="openBilling" x-cloak class="mt-2 space-y-1 pl-6">
                     <a href="{{ route('admin.billing')}}" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
                        {{ request()->routeIs('admin.billing') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
-                        <img class="w-5 h-5" src="{{ asset('img/billing.png') }}" alt="Billing"> Billing
+                        <img class="w-5 h-5" src="{{ asset('img/billing.png') }}" alt="Billing"> Billing-SOA
                     </a>
                     <a href="{{ route('admin.billing-summary')}}" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
                        {{ request()->routeIs('admin.billing-summary') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
-                        <img class="w-5 h-5" src="{{ asset('img/billing_summaries.png') }}" alt="Billing Summary"> Billing Summaries
+                        <img class="w-5 h-5" src="{{ asset('img/billing_summaries.png') }}" alt="Billing Summary"> Billing Summary
                     </a>
                     <a href="{{ route('admin.invoice')}}" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
                        {{ request()->routeIs('admin.invoice') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
@@ -84,14 +84,14 @@
                     <a href="{{ route('admin.receive-payment') }}"
                        class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
                        {{ request()->routeIs('admin.receive-payment') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
-                        <img class="w-5 h-5" src="{{ asset('img/receive_payment.png') }}" alt="Receive Payment">
+                        <img class="w-5 h-5" src="{{ asset('img/receive-payment.png') }}" alt="Receive Payment">
                         Receive Payment
                     </a>
 
                     <a href="{{ route('admin.receivable-records') }}"
                        class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
                        {{ request()->routeIs('admin.receivable-records') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
-                        <img class="w-5 h-5" src="{{ asset('img/receivable_records.png') }}" alt="Receivable Records">
+                        <img class="w-5 h-5" src="{{ asset('img/receivable-records.png') }}" alt="Receivable Records">
                         Receivable Records
                     </a>
                 </div>

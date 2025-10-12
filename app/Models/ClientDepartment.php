@@ -1,6 +1,5 @@
 <?php
 
-// app/Models/ClientDepartment.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +9,7 @@ class ClientDepartment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['client_id', 'department', 'email'];
+    protected $fillable = ['department', 'email', 'personnel', 'position'];
 
     public function client()
     {

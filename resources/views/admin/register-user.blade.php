@@ -1,4 +1,5 @@
 <x-admin-layout>
+  <title>Register User</title>
     <!-- Header -->
     <header class="sticky top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -45,7 +46,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="pb-6 px-4 sm:px-6 lg:px-6">
+    <main class="py-10 space-y-10 bg-gray-50 min-h-screen sm:px-6 lg:px-6">
         <div class="max-w-4xl mx-auto mt-6">
             <div class="bg-white shadow-xl rounded-2xl p-8 border border-gray-200">
                 <!-- Page Title -->

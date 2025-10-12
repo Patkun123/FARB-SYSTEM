@@ -1,11 +1,12 @@
 <x-admin-layout>
+    <title>Billing - Statement of Account</title>
+
     <!-- Header -->
     <header class="sticky top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <!-- Left Section: Sidebar Toggle + Logo -->
+                <!-- Sidebar Toggle + Logo -->
                 <div class="flex items-center gap-3">
-                    <!-- Sidebar Toggle -->
                     <button
                         @click="sidebarOpen = !sidebarOpen"
                         class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none transition"
@@ -24,7 +25,6 @@
                         </svg>
                     </button>
 
-                    <!-- Logo -->
                     <a href="{{ route('dashboard') }}" class="flex items-center">
                         <img src="{{ asset('img/logo_trans.png') }}" alt="logo" class="w-10 h-10 object-contain">
                         <div class="ml-2 leading-tight">
@@ -34,7 +34,6 @@
                     </a>
                 </div>
 
-                <!-- Navigation Links -->
                 <nav class="hidden sm:flex sm:space-x-6">
                     <x-nav-link :href="route('admin.billing')" :active="request()->routeIs('billing')">
                         {{ __('Billing') }}
@@ -45,371 +44,335 @@
     </header>
 
     <!-- Main Content -->
-    <main class="py-10 space-y-10 bg-gray-50 min-h-screen">
-        <div class="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white shadow-md hover:shadow-lg transition rounded-2xl p-8 border border-gray-200">
+    <main class="py-6 bg-gray-50 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+              <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <img class="w-10 h-10" src="{{ asset('img/billing.png') }}" alt="Billing">
+                        Billing-Statement of Account
+                    </h1>
 
-                <!-- Page Title -->
-                <h1 class="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-                    <img class="w-10 h-10" src="{{ asset('img/billing.png') }}" alt="Billing">
-                    Billing – Statement of Account
-                </h1>
+                </div>
 
-                <!-- SOA Details -->
-              <form class="space-y-8" >
-                    <!-- SOA Title -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">SOA Title</label>
-                        <input  required type="text" placeholder="Enter SOA title"
-                            class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+            <form
+                x-data="billingApp()"
+                x-init="init()"
+                x-ref="billingForm"
+                action="{{ route('admin.billing.store') }}"
+                method="POST"
+                @submit.prevent="prepareSubmit"
+            >
+                @csrf
 
-
-                    <!-- Client Company & Department -->
-                        <div x-data="billingDropdown()" x-init="init()" class="flex flex-col sm:flex-row gap-6">
-
-                            <!-- Client -->
-                            <div class="flex-1 relative">
-                                <label class="block text-sm font-medium text-gray-700">Client Company</label>
-                                <div class="relative mt-2">
-                                    <input required type="text" x-model="clientSearch" @input="filterClients"
-                                        placeholder="Search Client..."
-                                        :class="{'border-red-500 pr-10': clientError}"
-                                        class="w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                    <!-- ❌ Error icon -->
-                                    <span x-show="clientError" class="absolute right-3 top-2.5 text-red-500 text-lg">❌</span>
-                                </div>
-
-                                <!-- Dropdown list -->
-                                <ul x-show="filteredClients.length" @click.outside="filteredClients = []"
-                                    class="absolute z-10 bg-white border rounded shadow mt-1 w-full max-h-40 overflow-auto">
-                                    <template x-for="client in filteredClients" :key="client.id">
-                                        <li @click="selectClient(client)"
-                                            class="px-3 py-2 hover:bg-indigo-100 cursor-pointer"
-                                            x-text="client.company"></li>
-                                    </template>
-                                </ul>
-                            </div>
-
-                            <!-- Department -->
-                            <div class="flex-1 relative">
-                                <label class="block text-sm font-medium text-gray-700">Department</label>
-                                <div class="relative mt-2">
-                                    <input type="text" x-model="departmentSearch" @input="filterDepartments"
-                                        placeholder="Search Department..."
-                                        :class="{'border-red-500 pr-10': departmentError}"
-                                        class="w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                    <!-- ❌ Error icon -->
-                                    <span x-show="departmentError" class="absolute right-3 top-2.5 text-red-500 text-lg">❌</span>
-                                </div>
-
-                                <!-- Dropdown list -->
-                                <ul x-show="filteredDepartments.length" @click.outside="filteredDepartments = []"
-                                    class="absolute z-10 bg-white border rounded shadow mt-1 w-full max-h-40 overflow-auto">
-                                    <template x-for="dept in filteredDepartments" :key="dept.id">
-                                        <li @click="selectDepartment(dept)"
-                                            class="px-3 py-2 hover:bg-indigo-100 cursor-pointer"
-                                            x-text="dept.department"></li>
-                                    </template>
-                                </ul>
-                            </div>
+                <!-- CLIENT INFO -->
+                <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Client Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-gray-700 font-medium">SOA Title</label>
+                            <input name="soa_title" required type="text" placeholder="Enter SOA title"
+                                class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2">
                         </div>
 
-                        <script>
-                        function billingDropdown() {
-                                    return {
-                                        clients: [],
-                                        filteredClients: [],
-                                        selectedClient: null,
-                                        clientSearch: '',
-                                        clientError: false,
-
-                                        departments: [],
-                                        filteredDepartments: [],
-                                        selectedDepartment: null,
-                                        departmentSearch: '',
-                                        departmentError: false,
-
-                                        clientsUrl: '{{ route("admin.billing.clients") }}',
-                                        departmentsUrl: '{{ route("admin.billing.departments") }}',
-
-                                        init() {
-                                            fetch(this.clientsUrl)
-                                                .then(res => res.json())
-                                                .then(data => {
-                                                    this.clients = data;
-                                                });
-                                        },
-
-                                        filterClients() {
-                                            this.filteredClients = this.clients.filter(c =>
-                                                c.company.toLowerCase().includes(this.clientSearch.toLowerCase())
-                                            );
-                                            this.clientError = false; // reset error while typing
-                                        },
-
-                                        selectClient(client) {
-                                            this.selectedClient = client;
-                                            this.clientSearch = client.company;
-                                            this.clientError = false;
-                                            this.fetchDepartments();
-                                            this.filteredClients = [];
-                                        },
-
-                                        fetchDepartments() {
-                                            this.departments = [];
-                                            this.filteredDepartments = [];
-                                            this.departmentSearch = '';
-                                            this.selectedDepartment = null;
-                                            this.departmentError = false;
-
-                                            if (!this.selectedClient) return;
-
-                                            fetch(`${this.departmentsUrl}?client_id=${this.selectedClient.id}`)
-                                                .then(res => res.json())
-                                                .then(data => {
-                                                    this.departments = data;
-                                                });
-                                        },
-
-                                        filterDepartments() {
-                                            this.filteredDepartments = this.departments.filter(d =>
-                                                d.department.toLowerCase().includes(this.departmentSearch.toLowerCase())
-                                            );
-                                            this.departmentError = false;
-                                        },
-
-                                        selectDepartment(dept) {
-                                            this.selectedDepartment = dept;
-                                            this.departmentSearch = dept.department;
-                                            this.departmentError = false;
-                                            this.filteredDepartments = [];
-                                        },
-
-                                        validateAndSubmit() {
-                                            // Check if client exists
-                                            const foundClient = this.clients.find(c => c.company.toLowerCase() === this.clientSearch.toLowerCase());
-                                            if (!foundClient) {
-                                                this.clientError = true;
-                                                alert("Please select a valid client company.");
-                                                return;
-                                            }
-
-                                            // Check if department exists for the selected client
-                                            const foundDept = this.departments.find(d => d.department.toLowerCase() === this.departmentSearch.toLowerCase());
-                                            if (!foundDept) {
-                                                this.departmentError = true;
-                                                alert("Please select a valid department for the selected client.");
-                                                return;
-                                            }
-
-                                            // If both valid, proceed with submission (replace this with your save logic)
-                                            this.clientError = this.departmentError = false;
-                                            alert("Form submitted successfully!");
-                                            // Example: document.querySelector("form").submit();
-                                        }
-                                    };
-                                }
-                            </script>
-
-
-                    <!-- Covered Date -->
-                    <div class="space-y-4 border-t pt-6">
-                        <h2 class="text-lg font-semibold text-gray-700">Covered Date</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div>
-                                <label required class="block text-sm font-medium text-gray-700">Start Date</label>
-                                <input type="date"
-                                    class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
-                            <div>
-                                <label required class="block text-sm font-medium text-gray-700">End Date</label>
-                                <input type="date"
-                                    class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
-                        </div>
-                        <!-- Due Date -->
-                            <div class="space-y-4 border-t pt-6">
-                                <h2 class="text-lg font-semibold text-gray-700">Due Date</h2>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Set Payment Due Date</label>
-                                    <input required type="date"
-                                        class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                </div>
-                            </div>
-
-                    </div>
-
-                    <!-- SOA Format -->
-                    <div class="space-y-4 border-t pt-6">
-                        <h2 class="text-lg font-semibold text-gray-700">Format </h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <input required type="text" placeholder="Personel Name"
-                                class="w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <input required type="text" placeholder="Position"
-                                class="w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-
-                            </div>
-                        <textarea rows="3" placeholder="Statement text..."
-                                class="w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-                    </div>
-
-
-
-                    <!-- Billing Summary -->
-                    <div x-data="billSummaryApp()" x-init="init()" class="space-y-4 border-t pt-6">
-                        <h2 class="text-lg font-semibold text-gray-700">Bill Summary</h2>
-
-                        <!-- Search input -->
-                        <div class="mb-4 relative">
-                            <input type="text" x-model="searchTerm" @input="filterSummaries"
-                                placeholder="Search by summary name, department, or date..."
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
-
-                            <!-- Dropdown results -->
-                            <ul x-show="filteredSummaries.length && searchTerm"
-                                @click.outside="filteredSummaries = []"
-                                class="absolute z-10 bg-white border rounded shadow mt-1 w-full max-h-80 overflow-auto">
-
-                                <template x-for="summary in filteredSummaries" :key="summary.id">
-                                    <li
-                                        @click="!isAlreadySelected(summary.id) && selectSummary(summary)"
-                                        class="px-4 py-3 hover:bg-indigo-100 cursor-pointer flex justify-between items-start"
-                                        :class="isAlreadySelected(summary.id) ? 'opacity-50 cursor-not-allowed' : ''">
-
-                                        <div>
-                                            <div class="font-semibold text-gray-800"
-                                                x-text="summary.summary_name"></div>
-                                            <div class="text-sm text-gray-600"
-                                                x-text="'Dept: ' + (summary.department_name ?? 'N/A')"></div>
-                                            <div class="text-xs text-gray-500 italic"
-                                                x-text="'Covered: ' + formatDate(summary.start_date) + ' → ' + formatDate(summary.end_date)"></div>
-                                            <div class="text-xs text-gray-400 italic"
-                                                x-text="'Created: ' + formatDate(summary.created_at)"></div>
-                                        </div>
-
-                                        <!-- Already Added Indicator -->
-                                        <span x-show="isAlreadySelected(summary.id)"
-                                            class="text-xs text-red-600 font-semibold">Added ✓</span>
-                                    </li>
+                        <div>
+                            <label class="text-gray-700 font-medium">Client Company</label>
+                            <select name="client_id" x-model="selectedClientId" @change="fetchDepartments" required
+                                class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2">
+                                <option value="">Select Client</option>
+                                <template x-for="client in clients" :key="client.id">
+                                    <option :value="client.id" x-text="client.company"></option>
                                 </template>
-                            </ul>
+                            </select>
                         </div>
 
-                        <!-- Selected summaries -->
-                        <template x-for="(item, index) in selectedSummaries" :key="index">
-                            <div class="flex items-center gap-4 border p-4 rounded-lg bg-gray-50">
-                                <div class="flex-1">
-                                    <div class="font-semibold text-gray-800"
-                                        x-text="item.summary_name ?? 'Select from search above'"></div>
-                                    <div class="text-sm text-gray-600"
-                                        x-text="'Dept: ' + (item.department_name ?? 'N/A')"></div>
-                                    <div class="text-xs text-gray-500 italic"
-                                        x-text="'Covered: ' + formatDate(item.start_date) + ' → ' + formatDate(item.end_date)"></div>
-                                    <div class="text-xs text-gray-400 italic"
-                                        x-text="'Created: ' + formatDate(item.created_at)"></div>
+
+                        <div>
+                            <label class="text-gray-700 font-medium">Department</label>
+                            <select name="department_id"
+                                x-model="selectedDepartmentId"
+                                @change="updatePersonnelAndPosition"
+                                required
+                                class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2">
+                                <option value="">Select Department</option>
+                                <template x-for="department in departments" :key="department.id">
+                                    <option :value="department.id" x-text="department.department"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BILLING DATES -->
+                <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Billing Dates</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-gray-700 font-medium">Covered Start Date</label>
+                            <input name="covered_start_date" type="date" required
+                                class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2">
+                        </div>
+
+                        <div>
+                            <label class="text-gray-700 font-medium">Covered End Date</label>
+                            <input name="covered_end_date" type="date" required
+                                class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2">
+                        </div>
+
+                        <div>
+                            <label class="text-gray-700 font-medium">Due Date</label>
+                            <input name="due_date" type="date" required
+                                class="mt-2 w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PERSONNEL INFO -->
+                <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Personnel Details</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-gray-700 font-medium">Personnel Name</label>
+                            <div class="w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 bg-gray-100">
+                                <span x-text="selectedPersonnelName || 'N/A'"></span>
+                            </div>
+                            <input type="hidden" name="personnel_name" :value="selectedPersonnelName">
+                        </div>
+
+                        <div>
+                            <label class="text-gray-700 font-medium">Position</label>
+                            <div class="w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2 bg-gray-100">
+                                <span x-text="selectedPosition || 'N/A'"></span>
+                            </div>
+                            <input type="hidden" name="position" :value="selectedPosition">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- STATEMENT SUMMARY -->
+                <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Statement Summary</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-gray-700 font-medium">Statement Text</label>
+                            <textarea name="statement_text" rows="3" placeholder="Statement text..."
+                                class="w-full rounded-lg border border-gray-300 shadow-sm px-3 py-2"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="text-gray-700 font-medium">Billing Summaries</label>
+
+                            <div class="relative mt-2">
+                                <div class="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                                    </svg>
+                                    <input type="text"
+                                        x-model="searchQuery"
+                                        @input="debouncedFilterSummaries"
+                                        placeholder="Search summary name, department, or date..."
+                                        class="w-full outline-none text-gray-700"
+                                    >
+                                    <template x-if="loadingSearch">
+                                        <svg class="animate-spin h-4 w-4 text-gray-400 ml-2"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none"
+                                            viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8v8z"></path>
+                                        </svg>
+                                    </template>
                                 </div>
-                                <span class="text-gray-700 font-semibold"
-                                    x-text="'₱' + (item.total ?? 0).toLocaleString()"></span>
-                                <button type="button" @click="removeSummary(index)"
-                                    class="text-red-600 hover:text-red-800 font-semibold">×</button>
+
+                                <ul x-show="searchQuery && filteredSummaries.length > 0"
+                                    class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow mt-1 max-h-64 overflow-auto">
+                                    <template x-for="summary in filteredSummaries" :key="summary.id">
+                                        <li @click="selectSummary(summary)"
+                                            class="px-3 py-2 cursor-pointer hover:bg-indigo-50 transition"
+                                            :class="{'bg-gray-100 cursor-not-allowed opacity-60': isSelected(summary.id)}">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <p class="font-medium text-gray-800" x-text="summary.summary_name"></p>
+                                                    <p class="text-sm text-gray-500">
+                                                        <span x-text="summary.department_name"></span> •
+                                                        <span x-text="summary.start_date"></span> -
+                                                        <span x-text="summary.end_date"></span>
+                                                    </p>
+                                                    <p class="text-xs text-gray-400 mt-1">
+                                                        Created: <span x-text="new Date(summary.created_at).toLocaleDateString()"></span>
+                                                    </p>
+                                                </div>
+                                                <template x-if="isSelected(summary.id)">
+                                                    <span class="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded">✓ Selected</span>
+                                                </template>
+                                            </div>
+                                        </li>
+                                    </template>
+                                </ul>
+
+                                <div x-show="searchQuery && !filteredSummaries.length && !loadingSearch"
+                                    class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow mt-1 p-3 text-gray-500 text-sm">
+                                    No results found.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border border-gray-300 rounded-lg p-3 mt-3 bg-gray-50">
+                        <template x-if="selectedSummaries.length > 0">
+                            <div>
+                                <template x-for="item in selectedSummaries" :key="item.id">
+                                    <div class="p-3 bg-white border border-gray-200 rounded-lg shadow-sm mb-2">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xs font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded">✓ Selected</span>
+                                                <h3 class="font-semibold text-gray-800" x-text="item.summary_name"></h3>
+                                            </div>
+                                            <button type="button" @click="removeSummary(item.id)"
+                                                class="text-red-500 hover:text-red-700 text-sm font-medium">Cancel</button>
+                                        </div>
+                                        <div class="grid sm:grid-cols-2 text-sm text-gray-600 gap-x-6">
+                                            <div>
+                                                <p><strong>Department:</strong> <span x-text="item.department_name"></span></p>
+                                                <p><strong>Created:</strong> <span x-text="new Date(item.created_at).toLocaleDateString()"></span></p>
+                                            </div>
+                                            <div>
+                                                <p><strong>Start:</strong> <span x-text="item.start_date"></span></p>
+                                                <p><strong>End:</strong> <span x-text="item.end_date"></span></p>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-end mt-2 text-gray-800 font-semibold">
+                                            ₱ <span x-text="Number(item.grand_total).toFixed(2)"></span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <div class="flex justify-between font-semibold text-gray-900 border-t border-gray-300 pt-3 mt-3">
+                                    <span>Total Amount Due:</span>
+                                    <span>₱ <span x-text="totalAmount.toFixed(2)"></span></span>
+                                </div>
                             </div>
                         </template>
 
-                        <!-- Removed Add Empty Summary button -->
+                        <template x-if="selectedSummaries.length === 0">
+                            <p class="text-sm text-gray-500">No billing summaries selected yet.</p>
+                        </template>
 
-                        <div class="mt-6 text-right border-t pt-4">
-                            <span class="text-gray-700 font-semibold">Total Amount Due: </span>
-                            <span class="text-2xl text-indigo-600 font-bold" x-text="'₱' + totalAmount.toLocaleString()"></span>
-                        </div>
+                        <!-- Hidden Inputs -->
+                        <input type="hidden" name="summaries" x-ref="summariesInput">
+                        <input type="hidden" name="total_amount_due" x-ref="totalAmountInput">
                     </div>
+                </section>
 
-                    <script>
-                    function billSummaryApp() {
-                        return {
-                            summaries: [],
-                            filteredSummaries: [],
-                            selectedSummaries: [],
-                            searchTerm: '',
-                            totalAmount: 0,
-
-                            init() {
-                                fetch('{{ route("admin.billing.summaries") }}')
-                                    .then(res => res.json())
-                                    .then(data => {
-                                        this.summaries = data.map(s => ({
-                                            ...s,
-                                            created_at: s.created_at || new Date().toISOString()
-                                        }));
-                                    });
-                            },
-
-                            formatDate(dateStr) {
-                                if (!dateStr) return '-';
-                                const date = new Date(dateStr);
-                                return date.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
-                            },
-
-                            filterSummaries() {
-                                const term = this.searchTerm.toLowerCase();
-                                this.filteredSummaries = this.summaries.filter(s =>
-                                    s.summary_name.toLowerCase().includes(term) ||
-                                    (s.department_name && s.department_name.toLowerCase().includes(term)) ||
-                                    (s.start_date && this.formatDate(s.start_date).toLowerCase().includes(term)) ||
-                                    (s.end_date && this.formatDate(s.end_date).toLowerCase().includes(term)) ||
-                                    (s.created_at && this.formatDate(s.created_at).toLowerCase().includes(term))
-                                );
-                            },
-
-                            selectSummary(summary) {
-                                if (this.isAlreadySelected(summary.id)) return; // prevent duplicates
-                                this.selectedSummaries.push({
-                                    summary_id: summary.id,
-                                    summary_name: summary.summary_name,
-                                    department_name: summary.department_name,
-                                    start_date: summary.start_date,
-                                    end_date: summary.end_date,
-                                    created_at: summary.created_at,
-                                    total: parseFloat(summary.grand_total ?? 0)
-                                });
-                                this.searchTerm = '';
-                                this.filteredSummaries = [];
-                                this.computeTotal();
-                            },
-
-                            isAlreadySelected(id) {
-                                return this.selectedSummaries.some(s => s.summary_id === id);
-                            },
-
-                            removeSummary(index) {
-                                this.selectedSummaries.splice(index, 1);
-                                this.computeTotal();
-                            },
-
-                            computeTotal() {
-                                this.totalAmount = this.selectedSummaries.reduce((sum, s) => sum + (s.total || 0), 0);
-                            }
-                        }
-                    }
-                    </script>
-<!-- Submit Button -->
-                    <div class="pt-6 text-right">
-                        <button type="submit"
-                                class="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition">
-                            Save Billing
-                        </button>
-                    </div>
-
-                        </div>
-
-
-                    </div>
-
-
-                </form>
-
-            </div>
+                <!-- SUBMIT BUTTON -->
+                <div class="flex justify-end mt-6">
+                    <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-sm hover:bg-indigo-700 transition">
+                        Save Statement
+                    </button>
+                </div>
+            </form>
         </div>
-
     </main>
+
+<script>
+function billingApp() {
+    return {
+        clients: [],
+        departments: [],
+        selectedClientId: '',
+        selectedDepartmentId: '',
+        selectedPersonnelName: '',
+        selectedPosition: '',
+        filteredSummaries: [],
+        selectedSummaries: [],
+        searchQuery: '',
+        totalAmount: 0,
+        loadingSearch: false,
+        debounceTimer: null,
+        controller: null,
+
+        init() {
+            fetch('{{ route("admin.billing.clients") }}')
+                .then(res => res.json())
+                .then(data => this.clients = data);
+        },
+
+        fetchDepartments() {
+            if (!this.selectedClientId) return;
+            fetch(`{{ route("admin.billing.departments") }}?client_id=${this.selectedClientId}`)
+                .then(res => res.json())
+                .then(data => this.departments = data);
+        },
+
+        updatePersonnelAndPosition() {
+            const selected = this.departments.find(d => d.id == this.selectedDepartmentId);
+            this.selectedPersonnelName = selected?.personnel || '';
+            this.selectedPosition = selected?.position || '';
+        },
+
+        debouncedFilterSummaries() {
+            clearTimeout(this.debounceTimer);
+            this.loadingSearch = true;
+            this.debounceTimer = setTimeout(() => this.searchSummaries(), 400);
+        },
+
+        async searchSummaries() {
+            const q = this.searchQuery.trim();
+            if (!q) {
+                this.filteredSummaries = [];
+                this.loadingSearch = false;
+                return;
+            }
+
+            if (this.controller) this.controller.abort();
+            this.controller = new AbortController();
+
+            try {
+                const res = await fetch(`{{ route('admin.billing.summaries') }}?search=${encodeURIComponent(q)}`, {
+                    signal: this.controller.signal
+                });
+                const data = await res.json();
+                this.filteredSummaries = data;
+            } catch (err) {
+                if (err.name !== 'AbortError') console.error(err);
+            } finally {
+                this.loadingSearch = false;
+            }
+        },
+
+        selectSummary(summary) {
+            if (this.isSelected(summary.id)) return;
+            this.selectedSummaries.push(summary);
+            this.updateTotal();
+            this.searchQuery = '';
+            this.filteredSummaries = [];
+        },
+
+        removeSummary(id) {
+            this.selectedSummaries = this.selectedSummaries.filter(s => s.id !== id);
+            this.updateTotal();
+        },
+
+        isSelected(id) {
+            return this.selectedSummaries.some(s => s.id === id);
+        },
+
+        updateTotal() {
+            this.totalAmount = this.selectedSummaries.reduce((sum, s) => sum + parseFloat(s.grand_total || 0), 0);
+        },
+
+        prepareSubmit() {
+            // Update hidden inputs manually
+            this.$refs.summariesInput.value = JSON.stringify(this.selectedSummaries);
+            this.$refs.totalAmountInput.value = this.totalAmount.toFixed(2);
+
+            // Submit the form using form ref
+            this.$refs.billingForm.submit();
+        }
+    }
+}
+</script>
 </x-admin-layout>

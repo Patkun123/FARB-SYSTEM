@@ -9,108 +9,143 @@ use App\Models\Client;
 use App\Models\ClientDepartment;
 use App\Models\BillingSummary;
 use App\Models\StatementOfAccount;
+use App\Models\StatementSummaryItem;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 
 class BillingController extends Controller
 {
-    /** Get Clients */
-    public function getClients()
+    /**
+     * Show Billing Page
+     */
+    public function index()
     {
-        $clients = Client::orderBy('company')->get();
+        return view('admin.billing');
+    }
+
+    /**
+     * Get all clients (JSON)
+     */
+    public function clients()
+    {
+        $clients = Client::select('id', 'company')->get();
         return response()->json($clients);
     }
 
-    /** Get Departments */
-    public function getDepartments(Request $request)
+    /**
+     * Get departments for a given client (JSON)
+     */
+    public function departments(Request $request)
     {
         $clientId = $request->query('client_id');
 
         if (!$clientId) {
-            return response()->json([], 400);
+            return response()->json([]);
         }
 
         $departments = ClientDepartment::where('client_id', $clientId)
-            ->orderBy('department')
+            ->select('id', 'department', 'personnel', 'position')
             ->get();
 
         return response()->json($departments);
     }
 
-    /** Fetch Billing Summaries */
-    public function getBillingSummaries()
+    /**
+     * Fetch Billing Summaries for the Billing Summary UI
+     */
+    public function getBillingSummaries(Request $request)
     {
-        $summaries = BillingSummary::leftJoin('billing_totals', 'billing_summaries.id', '=', 'billing_totals.billing_summary_id')
+        $query = BillingSummary::leftJoin('billing_totals', 'billing_summaries.id', '=', 'billing_totals.billing_summary_id')
             ->select(
                 'billing_summaries.id',
                 'billing_summaries.summary_name',
                 'billing_summaries.department_name',
                 'billing_summaries.start_date',
                 'billing_summaries.end_date',
-                'billing_totals.grand_total'
-            )
-            ->orderBy('billing_summaries.created_at', 'desc')
-            ->get();
+                'billing_summaries.created_at',
+                DB::raw('COALESCE(billing_totals.grand_total, 0) as grand_total')
+            );
 
-        return response()->json($summaries);
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('billing_summaries.summary_name', 'like', "%{$search}%")
+                  ->orWhere('billing_summaries.department_name', 'like', "%{$search}%")
+                  ->orWhere('billing_summaries.start_date', 'like', "%{$search}%")
+                  ->orWhere('billing_summaries.end_date', 'like', "%{$search}%")
+                  ->orWhereDate('billing_summaries.created_at', $search);
+            });
+        }
+
+        return response()->json($query->orderBy('billing_summaries.created_at', 'desc')->limit(30)->get());
     }
 
-    /** 🆕 Save Statement of Account */
+    /**
+     * Store a new Statement of Account + create Invoice automatically
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
+        $request->validate([
+            'soa_title' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
             'department_id' => 'required|exists:client_departments,id',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'due_date' => 'required|date|after_or_equal:end_date',
-            'personnel_name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
+            'covered_start_date' => 'required|date',
+            'covered_end_date' => 'required|date|after_or_equal:covered_start_date',
+            'due_date' => 'required|date',
+            'personnel_name' => 'nullable|string|max:255',
+            'position' => 'nullable|string|max:255',
             'statement_text' => 'nullable|string',
-            'summaries' => 'required|array|min:1',
-            'summaries.*.billing_summary_id' => 'required|exists:billing_summaries,id',
-            'summaries.*.amount' => 'nullable|numeric|min:0',
-            'total_amount' => 'nullable|numeric|min:0',
+            'summaries' => 'required|string',
+            'total_amount_due' => 'required|numeric',
         ]);
 
         DB::beginTransaction();
+
         try {
-            // Create main SOA record
+            // 1️⃣ Create Statement of Account
             $soa = StatementOfAccount::create([
-                'client_id' => $validated['client_id'],
-                'department_id' => $validated['department_id'],
-                'title' => $validated['title'],
-                'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date'],
-                'due_date' => $validated['due_date'],
-                'personnel_name' => $validated['personnel_name'],
-                'position' => $validated['position'],
-                'statement_text' => $validated['statement_text'] ?? null,
-                'total_amount' => $validated['total_amount'] ?? 0,
+                'soa_title' => $request->soa_title,
+                'client_id' => $request->client_id,
+                'department_id' => $request->department_id,
+                'covered_start_date' => $request->covered_start_date,
+                'covered_end_date' => $request->covered_end_date,
+                'due_date' => $request->due_date,
+                'personnel_name' => $request->personnel_name,
+                'position' => $request->position,
+                'statement_text' => $request->statement_text,
+                'total_amount_due' => $request->total_amount_due,
             ]);
 
-            // Attach billing summaries to SOA
-            $syncData = [];
-            foreach ($validated['summaries'] as $summary) {
-                $syncData[$summary['billing_summary_id']] = [
-                    'amount' => $summary['amount'] ?? 0,
-                ];
+            // 2️⃣ Save linked summaries
+            $selectedSummaries = json_decode($request->summaries, true);
+            foreach ($selectedSummaries as $summary) {
+                DB::table('statement_summary_items')->insert([
+                    'statement_id' => $soa->id,
+                    'billing_summary_id' => $summary['id'],
+                    'grand_total' => $summary['grand_total'] ?? 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
 
-            $soa->billingSummaries()->sync($syncData);
+            // 3️⃣ Automatically create Invoice
+            $invoice = Invoice::create([
+                'statement_id' => $soa->id,
+                'client_id' => $request->client_id,
+                'client_department_id' => $request->department_id,
+                'invoice_date' => now(),
+                'description' => $request->statement_text,
+                'total_amount' => $request->total_amount_due,
+            ]);
+
 
             DB::commit();
 
-            return response()->json([
-                'message' => 'Statement of Account saved successfully!',
-                'soa_id' => $soa->id,
-            ], 201);
+            return redirect()->route('admin.billing')
+                ->with('success', 'Statement of Account and Invoice created successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'message' => 'Failed to save Statement of Account.',
-                'error' => $e->getMessage(),
-            ], 500);
+            return back()->withErrors(['error' => 'Failed to save SOA and Invoice: ' . $e->getMessage()]);
         }
     }
 }

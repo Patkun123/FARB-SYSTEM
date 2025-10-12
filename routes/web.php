@@ -8,7 +8,9 @@ use App\Http\Controllers\Admin\BillingController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\AdminRegisterController;
+use App\Http\Controllers\Auth\StatementOfAccountController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Admin\InvoiceController;
 
 // Public
 Route::get('/', function () {
@@ -33,29 +35,35 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         return view('admin.dashboard');
     })->name('dashboard');
 
-  // CLients Management - CRUD via Controller RESTful
-    Route::resource('clients', ClientController::class)->except(['show']);
-
-    // Manage Billing
-    Route::get('/billing', function () {return view('admin.billing');})->name('billing');
-    //ajax routes for clients and departments
-    Route::get('/billing/clients', [BillingController::class, 'getClients'])->name('billing.clients');
-    Route::get('/billing/departments', [BillingController::class, 'getDepartments'])->name('billing.departments');
-    //billing summaries with totals
-    Route::get('/billing/summaries', [BillingController::class, 'getBillingSummaries'])->name('billing.summaries');
+     Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+    Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+    Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+    Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
 
 
+     Route::get('billing', [BillingController::class, 'index'])->name('billing');
+    Route::get('billing/clients', [BillingController::class, 'clients'])->name('billing.clients');
+    Route::get('billing/departments', [BillingController::class, 'departments'])->name('billing.departments');
+    Route::get('billing/summaries', [BillingController::class, 'getBillingSummaries'])->name('billing.summaries');
+    Route::post('billing/store', [BillingController::class, 'store'])->name('billing.store');
 
+
+    //route for billing-summary.blade.php
     //Billing Summary
     Route::get('/billing-summary', function () {return view('admin.billing-summary');})->name('billing-summary');
     // Billing Summary Save (POST)
     Route::post('/billing-summary/save', [BillingSummaryController::class, 'store'])
     ->name('billing-summary.save');
 
-    Route::get('/invoice', function () {
-        return view('admin.invoice');
-    })->name('invoice');
+    //route for invoice.blade.php
 
+    Route::get('/invoice', [InvoiceController::class, 'index'])->name('invoice');
+    Route::get('/invoice/clients', [InvoiceController::class, 'getClients'])->name('invoice.clients');
+    Route::get('/invoice/departments/{clientId}', [InvoiceController::class, 'getDepartments'])->name('invoice.departments');
+    Route::post('/invoice/store', [InvoiceController::class, 'store'])->name('invoice.store');
+    Route::get('/invoice/next-number', [InvoiceController::class, 'nextInvoiceNumber'])->name('invoice.nextInvoiceNumber');
+
+    //route for records.blade.php
     Route::get('/records', function () {
         return view('admin.records');
     })->name('records');
@@ -73,13 +81,13 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
     // Settings / Users
 
-
+//route for profile-settings.blade.php
 Route::get('/auth/profile-settings', function () {
     $user = Auth::user(); // get currently logged-in user
     return view('admin.auth.profile-settings', compact('user'));
 })->name('profile-settings');
 
-
+    //route for system-users.blade.php
     //MANAGE
     Route::get('/system-users', function () {
         return view('admin.system-users');
@@ -88,8 +96,10 @@ Route::get('/auth/profile-settings', function () {
     return view('admin.system-users');
     })->name('system-users');
 
+
+    //route for change-password.blade.php
     // Admin Register New User
-  Route::get('/register-user', [AdminRegisterController::class, 'create'])
+    Route::get('/register-user', [AdminRegisterController::class, 'create'])
     ->name('register-user');
     Route::post('/register-user', [AdminRegisterController::class, 'store'])
         ->name('register-user.store');

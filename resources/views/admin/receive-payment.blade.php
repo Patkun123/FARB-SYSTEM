@@ -1,4 +1,5 @@
 <x-admin-layout>
+    <title>Receive Payment</title>
     <!-- Header -->
     <header class="sticky top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,8 +51,8 @@
             <div class="bg-white shadow-lg rounded-2xl p-8 border border-gray-200">
                 <!-- Page Title -->
                 <h1 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                    <img class="w-10 h-10" src="{{ asset('img/billing_summaries.png') }}" alt="Billing">
-                    Billing Summaries
+                    <img class="w-10 h-10" src="{{ asset('img/billing_summaries.png') }}" alt="Payment">
+                    Payment Received
                 </h1>
             </div>
         </div>

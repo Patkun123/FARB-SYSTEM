@@ -1,4 +1,5 @@
 <x-admin-layout>
+    <title>Profile Settings</title>
     <!-- Header -->
     <div class="bg-white border-b border-gray-100 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,9 +35,9 @@
     </div>
 
     <!-- Main Content -->
-    <main class="py-6">
+    <main class="py-6 bg-gray-50 min-h-screen">
         <div class="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-gray-50 shadow-md hover:shadow-lg transition rounded-2xl p-8 border border-gray-200">
+            <div class=" shadow-md hover:shadow-lg transition rounded-2xl p-8 border border-gray-200">
 
                 <!-- Page Title -->
                 <div class="flex justify-between items-center mb-6">

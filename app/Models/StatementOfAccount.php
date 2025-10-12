@@ -9,22 +9,34 @@ class StatementOfAccount extends Model
 {
     use HasFactory;
 
+    protected $table = 'statements_of_account';
+
+    // Fillable fields for mass assignment
     protected $fillable = [
+        'soa_title',
         'client_id',
         'department_id',
-        'title',
-        'start_date',
-        'end_date',
+        'covered_start_date',
+        'covered_end_date',
         'due_date',
         'personnel_name',
         'position',
         'statement_text',
-        'total_amount',
+        'total_amount_due',
     ];
 
+    // Cast fields to appropriate types
+    protected $casts = [
+        'covered_start_date' => 'date',
+        'covered_end_date' => 'date',
+        'due_date' => 'date',
+        'total_amount_due' => 'decimal:2',
+    ];
+
+    // Relationships
     public function client()
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Client::class, 'client_id');
     }
 
     public function department()
@@ -32,10 +44,8 @@ class StatementOfAccount extends Model
         return $this->belongsTo(ClientDepartment::class, 'department_id');
     }
 
-    public function billingSummaries()
+    public function summaryItems()
     {
-        return $this->belongsToMany(BillingSummary::class, 'soa_billing_summaries', 'soa_id', 'billing_summary_id')
-                    ->withPivot('amount')
-                    ->withTimestamps();
+        return $this->hasMany(StatementSummaryItem::class, 'statement_id');
     }
 }
