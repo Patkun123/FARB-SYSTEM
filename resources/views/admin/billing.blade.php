@@ -64,6 +64,7 @@
             >
                 @csrf
 
+                
                 <!-- CLIENT INFO -->
                 <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                     <h2 class="text-lg font-medium text-gray-900 mb-4">Client Information</h2>
