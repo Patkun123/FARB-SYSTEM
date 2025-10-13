@@ -13,25 +13,34 @@ class DatabaseSeeder extends Seeder
      */
      public function run(): void
     {
-        User::create([
-            'name' => 'System Admin',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
-        ]);
-
-        User::create([
-            'name' => 'Billing Clerk',
-            'email' => 'billing@example.com',
-            'password' => Hash::make('password'),
-            'role' => 'billing_clerk',
-        ]);
-
-        User::create([
-            'name' => 'Receivable Clerk',
-            'email' => 'receivable@example.com',
-            'password' => Hash::make('password'),
-            'role' => 'receivable_clerk',
+         DB::table('users')->insert([
+            [
+                'name' => 'Admin User',
+                'email' => 'admin@example.com',
+                'password' => Hash::make('password123'),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Billing Clerk',
+                'email' => 'billing@example.com',
+                'password' => Hash::make('password123'),
+                'role' => 'billing_clerk',
+                'email_verified_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Receivable Clerk',
+                'email' => 'receivable@example.com',
+                'password' => Hash::make('password123'),
+                'role' => 'receivable_clerk',
+                'email_verified_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }
