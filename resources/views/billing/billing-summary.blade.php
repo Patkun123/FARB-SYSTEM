@@ -1,40 +1,37 @@
-<x-admin-layout>
-    <title>Billing Summary</title>
-       <!-- Header -->
-    <header class="sticky top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-30">
+<x-billing-app>
+        <!-- Header -->
+    <div class="bg-white border-b border-gray-200 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-3">
-                    <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none transition">
-                        <svg x-show="!sidebarOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Left Section -->
+                <div class="flex items-center gap-4">
+                    <button @click="sidebarOpen = !sidebarOpen"
+                        class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none transition">
+                        <svg x-show="!sidebarOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M4 6h16M4 12h16M4 18h16" />
+                                d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
-                        <svg x-show="sidebarOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
+                        <svg x-show="sidebarOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M6 18L18 6M6 6l12 12" />
+                                d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
-
-                    <a href="{{ route('dashboard') }}" class="flex items-center">
-                        <img src="{{ asset('img/logo_trans.png') }}" alt="logo" class="w-10 h-10 object-contain">
-                        <div class="ml-2 leading-tight">
-                            <span class="text-lg font-semibold text-gray-800">FARB SYSTEM</span>
-                            <p class="text-[11px] text-gray-500">Multi Purpose Cooperative</p>
-                        </div>
-                    </a>
-                </div>
-
-                <nav class="hidden sm:flex sm:space-x-6">
-                    <x-nav-link :href="route('admin.billing-summary')" :active="request()->routeIs('admin.billing-summary')">
+                <div class="hidden sm:flex sm:space-x-6">
+                    <x-nav-link :href="route('billing.billing')" :active="request()->routeIs('billing')">
                         {{ __('Billing Summary') }}
                     </x-nav-link>
-                </nav>
+                </div>
             </div>
+
+            <!-- Logo -->
+            <a href="{{ route('dashboard') }}" class="flex items-center">
+                <img src="{{ asset('img/logo_trans.png') }}" alt="logo" class="w-10 h-10">
+            </a>
         </div>
-    </header>
+    </div>
+</div>
 
 <!-- Main Content -->
 <main class="py-8 bg-gray-50 min-h-screen">
@@ -380,15 +377,31 @@
                     </div>
 
                 </section>
-                <div class="flex justify-end mt-6"
-                    x-data="billingAppWithSave()">
-                    <button type="button"
-                            @click="saveSummary()"
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                        Save
-                    </button>
-                </div>
+                  <!-- Save Button -->
+                    <div class="flex justify-end mt-6" x-data="{ confirmModal: false, successModal: false }">
+                        <button
+                            type="button"
+                            @click="
+                                if (!breakdownReady) { alert('Please generate Breakdown by Days before submitting.'); return; }
 
+                                employees.forEach(emp => {
+                                    emp.dailyEntries = emp.daily.map((hours, i) => ({
+                                        hours: Number(hours || 0),
+                                        override_type: emp.dayOverrides[i] || null,
+                                        override_threshold: emp.dayThresholds[i] != null ? Number(emp.dayThresholds[i]) : null
+                                    }));
+                                    delete emp.daily;
+                                    delete emp.dayOverrides;
+                                    delete emp.dayThresholds;
+                                });
+
+                                recomputeTotals(); // <-- make totals reactive
+
+                                confirmModal = true;
+                            "
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            Save Billing Summary
+                        </button>
 
 
                         <form x-ref="billingForm" action="{{ route('admin.billing-summary.save') }}" method="POST" class="hidden">
@@ -789,46 +802,6 @@ function billingApp() {
         dayTypeLabel(type) {
             return this.rateLabels[type] || type;
         },
-        
-
-         async saveSummary() {
-            if (!this.breakdownReady) {
-                alert('Please generate Breakdown by Days before submitting.');
-                return;
-            }
-
-            const payload = {
-                summary_name: this.summaryName,
-                department_name: this.departmentName,
-                start_date: this.startDate,
-                end_date: this.endDate,
-                rates: JSON.stringify(this.rates),
-                daysMeta: JSON.stringify(this.daysMeta),
-                employees: JSON.stringify(this.employees),
-                totals: JSON.stringify(this.totals),
-                _token: '{{ csrf_token() }}'
-            };
-
-            try {
-                const res = await fetch('{{ route("admin.billing-summary.save") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    alert('Billing summary saved successfully!');
-                    window.location.href = '{{ route("admin.billing-summary") }}';
-                } else {
-                    const errorText = await res.text();
-                    console.error('Save failed:', errorText);
-                    alert('Save failed. Check console or Laravel logs.');
-                }
-            } catch (err) {
-                console.error('Network error:', err);
-                alert('Network or server error occurred.');
-            }
-        },
 
         resetExceptRates() {
             if (confirm('Are you sure you want to reset everything except global rates?')) {
@@ -845,5 +818,5 @@ function billingApp() {
     };
 }
 </script>
- 
-</x-admin-layout>
+
+</x-billing-app>

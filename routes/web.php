@@ -112,12 +112,38 @@ Route::get('/auth/profile-settings', function () {
 
 
 
-// ---------------- BILLING CLERK ----------------
-Route::middleware(['auth'])->group(function () {
-    Route::get('/billing/dashboard', function () {
+// ---------------- BILLING CLERK ---------------- view file is in resources/views/billing/
+Route::middleware(['auth'])->prefix('billing')->name('billing.')->group(function () {
+    Route::get('/dashboard', function () {
         return view('billing.dashboard');
-    })->name('billing.dashboard');
-});
+    })->name('dashboard');
+
+    Route::get('/auth/profile-settings', function () {
+        $user = Auth::user();
+        return view('billing.auth.profile-settings', compact('user'));
+    })->name('profile-settings');
+    
+    
+    //billing page billing/billing.blade.php
+        Route::get('/billing', function () {
+            return view('billing.billing');
+        })->name('billing');
+
+        Route::get('/billing', function () {
+            return view('billing.invoice');
+        })->name('invoice');
+
+
+        Route::get('/billing-summary', function () {
+            return view('billing.billing-summary');
+        })->name('billing-summary');
+
+        Route::post('/billing-summary/save', [BillingSummaryController::class, 'store'])
+        ->name('billing-summary.save');
+        
+
+
+}); 
 
 
 
