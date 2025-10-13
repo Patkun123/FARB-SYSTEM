@@ -12,7 +12,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'FARB BILLING & MONITORING SYSTEM') }}</title>
 
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
