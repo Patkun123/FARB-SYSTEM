@@ -60,8 +60,8 @@
                 x-ref="billingForm"
                 action="{{ route('admin.billing.store') }}"
                 method="POST"
-                @submit.prevent="prepareSubmit"
             >
+
                 @csrf
 
                 
@@ -269,11 +269,18 @@
                 </section>
 
                 <!-- SUBMIT BUTTON -->
-                <div class="flex justify-end mt-6">
-                    <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-sm hover:bg-indigo-700 transition">
-                        Save Statement
+               <div class="flex justify-end mt-6">
+                    <button
+                        type="submit"
+                        @click.prevent="prepareSubmit()"
+                        :disabled="isSaving"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-sm hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <span x-show="!isSaving">Save Statement</span>
+                        <span x-show="isSaving">Saving...</span>
                     </button>
                 </div>
+
             </form>
         </div>
     </main>
@@ -281,67 +288,82 @@
 <script>
 function billingApp() {
     return {
+        // --- State ---
         clients: [],
         departments: [],
         selectedClientId: '',
         selectedDepartmentId: '',
         selectedPersonnelName: '',
         selectedPosition: '',
+        searchQuery: '',
         filteredSummaries: [],
         selectedSummaries: [],
-        searchQuery: '',
         totalAmount: 0,
         loadingSearch: false,
         debounceTimer: null,
-        controller: null,
+        isSaving: false, // <-- new state
 
+        // --- Initialization ---
         init() {
-            fetch('{{ route("admin.billing.clients") }}')
-                .then(res => res.json())
-                .then(data => this.clients = data);
+            this.fetchClients();
         },
 
+        // --- Fetch Clients ---
+        fetchClients() {
+            fetch('{{ route("admin.billing.clients") }}')
+                .then(res => res.json())
+                .then(data => this.clients = data)
+                .catch(err => console.error(err));
+        },
+
+        // --- Fetch Departments ---
         fetchDepartments() {
-            if (!this.selectedClientId) return;
+            if (!this.selectedClientId) {
+                this.departments = [];
+                this.selectedDepartmentId = '';
+                this.selectedPersonnelName = '';
+                this.selectedPosition = '';
+                return;
+            }
+
             fetch(`{{ route("admin.billing.departments") }}?client_id=${this.selectedClientId}`)
                 .then(res => res.json())
-                .then(data => this.departments = data);
+                .then(data => {
+                    this.departments = data;
+                    this.selectedDepartmentId = '';
+                    this.selectedPersonnelName = '';
+                    this.selectedPosition = '';
+                })
+                .catch(err => console.error(err));
         },
 
         updatePersonnelAndPosition() {
-            const selected = this.departments.find(d => d.id == this.selectedDepartmentId);
-            this.selectedPersonnelName = selected?.personnel || '';
-            this.selectedPosition = selected?.position || '';
+            const dept = this.departments.find(d => d.id == this.selectedDepartmentId);
+            this.selectedPersonnelName = dept?.personnel || '';
+            this.selectedPosition = dept?.position || '';
         },
 
         debouncedFilterSummaries() {
             clearTimeout(this.debounceTimer);
+            if (!this.searchQuery.trim()) {
+                this.filteredSummaries = [];
+                return;
+            }
             this.loadingSearch = true;
             this.debounceTimer = setTimeout(() => this.searchSummaries(), 400);
         },
 
-        async searchSummaries() {
-            const q = this.searchQuery.trim();
-            if (!q) {
-                this.filteredSummaries = [];
-                this.loadingSearch = false;
-                return;
-            }
-
-            if (this.controller) this.controller.abort();
-            this.controller = new AbortController();
-
-            try {
-                const res = await fetch(`{{ route('admin.billing.summaries') }}?search=${encodeURIComponent(q)}`, {
-                    signal: this.controller.signal
+        searchSummaries() {
+            fetch(`{{ route('admin.billing.getBillingSummaries') }}?search=${encodeURIComponent(this.searchQuery)}`)
+                .then(res => res.json())
+                .then(data => {
+                    this.filteredSummaries = data;
+                    this.loadingSearch = false;
+                })
+                .catch(err => {
+                    console.error(err);
+                    this.loadingSearch = false;
                 });
-                const data = await res.json();
-                this.filteredSummaries = data;
-            } catch (err) {
-                if (err.name !== 'AbortError') console.error(err);
-            } finally {
-                this.loadingSearch = false;
-            }
         },
 
         selectSummary(summary) {
@@ -350,11 +372,13 @@ function billingApp() {
             this.updateTotal();
             this.searchQuery = '';
             this.filteredSummaries = [];
+            this.updateHiddenInputs();
         },
 
         removeSummary(id) {
             this.selectedSummaries = this.selectedSummaries.filter(s => s.id !== id);
             this.updateTotal();
+            this.updateHiddenInputs();
         },
 
         isSelected(id) {
@@ -365,15 +389,27 @@ function billingApp() {
             this.totalAmount = this.selectedSummaries.reduce((sum, s) => sum + parseFloat(s.grand_total || 0), 0);
         },
 
-        prepareSubmit() {
-            // Update hidden inputs manually
-            this.$refs.summariesInput.value = JSON.stringify(this.selectedSummaries);
-            this.$refs.totalAmountInput.value = this.totalAmount.toFixed(2);
+        updateHiddenInputs() {
+            if (this.$refs.summariesInput) {
+                this.$refs.summariesInput.value = JSON.stringify(this.selectedSummaries);
+            }
+            if (this.$refs.totalAmountInput) {
+                this.$refs.totalAmountInput.value = this.totalAmount.toFixed(2);
+            }
+        },
 
-            // Submit the form using form ref
+        // --- New: Prevent multiple clicks and show saving ---
+        prepareSubmit() {
+            if (this.isSaving) return; // prevent multiple clicks
+            this.isSaving = true;
+
+            this.updateHiddenInputs();
+
+            // Submit the form normally
             this.$refs.billingForm.submit();
-        }
+        },
     }
 }
+
 </script>
 </x-admin-layout>

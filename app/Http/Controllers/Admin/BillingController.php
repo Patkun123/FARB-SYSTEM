@@ -127,11 +127,12 @@ class BillingController extends Controller
                 ]);
             }
 
-            // 3️⃣ Automatically create Invoice
+           // 3️⃣ Automatically create Invoice
             $invoice = Invoice::create([
                 'statement_id' => $soa->id,
                 'client_id' => $request->client_id,
                 'client_department_id' => $request->department_id,
+                'internal_department' => $this->getDepartmentNameFromSummaries($selectedSummaries),
                 'invoice_date' => now(),
                 'description' => $request->statement_text,
                 'total_amount' => $request->total_amount_due,
@@ -148,4 +149,20 @@ class BillingController extends Controller
             return back()->withErrors(['error' => 'Failed to save SOA and Invoice: ' . $e->getMessage()]);
         }
     }
+
+        /**
+     * Helper function to get department name(s) from selected summaries
+     */
+    private function getDepartmentNameFromSummaries(array $summaries): string
+    {
+        // Fetch department names from billing_summaries by IDs
+        $names = BillingSummary::whereIn('id', array_column($summaries, 'id'))
+            ->pluck('department_name')
+            ->unique()
+            ->toArray();
+
+        // Combine multiple names into a single string if needed
+        return implode(', ', $names);
+    }
+
 }

@@ -97,7 +97,7 @@
 
                 <!-- Global Rates -->
                  <section>
-                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Global Rates</h2>
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Rates</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-6">
                         <template x-for="(rate, key) in rates" :key="key">
                             <div>
@@ -380,12 +380,14 @@
                     </div>
 
                 </section>
-                <div class="flex justify-end mt-6"
-                    x-data="billingAppWithSave()">
+             <div class="flex justify-end mt-6" x-data="billingAppWithSave()">
                     <button type="button"
                             @click="saveSummary()"
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                        Save
+                            :disabled="isSaving"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                            Save Summary                        
+                            <span x-show="!isSaving">Save</span>
+                        <span x-show="isSaving">Saving...</span>
                     </button>
                 </div>
 
@@ -393,8 +395,8 @@
 
                         <form x-ref="billingForm" action="{{ route('admin.billing-summary.save') }}" method="POST" class="hidden">
                             @csrf
-                            <input type="hidden" name="summary_name" :value="summaryName">
-                            <input type="hidden" name="department_name" :value="departmentName">
+                            <input type="hidden" name="summary_name" :value="summaryName"\>
+                            <input type="hidden" name="department_name" :value="departmentName" >
                             <input type="hidden" name="start_date" :value="startDate">
                             <input type="hidden" name="end_date" :value="endDate">
                             <input type="hidden" name="rates" :value="JSON.stringify(rates)">
@@ -443,6 +445,8 @@ function billingApp() {
         dateRangeError: false,
         breakdownReady: false,
         employeeToAdd: 1,
+        totals: {},        // ✅ make sure totals exist
+        isSaving: false,
         
         // Comprehensive rate structure
         rates: {
@@ -790,12 +794,52 @@ function billingApp() {
             return this.rateLabels[type] || type;
         },
         
+        computeTotals() {
+            const summaryFields = this.summaryFields;
+            const totals = {};
+            summaryFields.forEach(field => {
+                totals[field + '_total'] = this.employees.reduce(
+                    (sum, emp) => sum + (Number(emp[field]) || 0), 0
+                );
+            });
+            totals.grand_total = this.employees.reduce(
+                (sum, emp) => sum + this.totalPay(emp), 0
+            );
+            this.totals = totals;
+        },
 
-         async saveSummary() {
+        async saveSummary() {
+            if (this.isSaving) return; // prevent double submission
+
             if (!this.breakdownReady) {
                 alert('Please generate Breakdown by Days before submitting.');
                 return;
             }
+
+            if (!this.summaryName || !this.summaryName.trim()) {
+                alert('Please enter a Summary Name.');
+                return;
+            }
+
+            if (!this.departmentName || !this.departmentName.trim()) {
+                alert('Please select a Department.');
+                return;
+            }
+
+            // Compute totals before saving
+            this.computeTotals();
+
+            this.isSaving = true;
+
+            // Prepare employees with dailyEntries for backend
+            const employeesPayload = this.employees.map(emp => ({
+                ...emp,
+                dailyEntries: emp.daily.map((hours, idx) => ({
+                    hours: Number(hours) || 0,
+                    override_type: emp.dayOverrides[idx] || null,
+                    override_threshold: emp.dayThresholds[idx] != null ? emp.dayThresholds[idx] : null
+                }))
+            }));
 
             const payload = {
                 summary_name: this.summaryName,
@@ -804,7 +848,7 @@ function billingApp() {
                 end_date: this.endDate,
                 rates: JSON.stringify(this.rates),
                 daysMeta: JSON.stringify(this.daysMeta),
-                employees: JSON.stringify(this.employees),
+                employees: JSON.stringify(employeesPayload),
                 totals: JSON.stringify(this.totals),
                 _token: '{{ csrf_token() }}'
             };
@@ -827,8 +871,11 @@ function billingApp() {
             } catch (err) {
                 console.error('Network error:', err);
                 alert('Network or server error occurred.');
+            } finally {
+                this.isSaving = false;
             }
         },
+
 
         resetExceptRates() {
             if (confirm('Are you sure you want to reset everything except global rates?')) {

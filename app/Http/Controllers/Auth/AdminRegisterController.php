@@ -15,7 +15,7 @@ class AdminRegisterController extends Controller
 {
     public function create(): View
     {
-        return view('admin.register-user');
+        return view('admin.system.user');
     }
 
     public function store(Request $request): RedirectResponse

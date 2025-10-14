@@ -13,7 +13,7 @@
          x-data="{
             openBilling: {{ request()->routeIs('admin.billing*') || request()->routeIs('admin.records') ? 'true' : 'false' }},
             openReceivables: {{ request()->routeIs('admin.receivables*') || request()->routeIs('admin.receive-payment') || request()->routeIs('admin.receivable-records') ? 'true' : 'false' }},
-            openUsers: {{ request()->routeIs('admin.auth.*') || request()->routeIs('admin.profile-settings') || request()->routeIs('admin.system-users') || request()->routeIs('admin.register-user') ? 'true' : 'false' }}
+            openUsers: {{ request()->routeIs('admin.auth.*') || request()->routeIs('admin.profile-settings') || request()->routeIs('system-users.index.index') || request()->routeIs('admin.register-user') ? 'true' : 'false' }}
          }">
 
         <nav class="space-y-1">
@@ -58,11 +58,19 @@
                     </a>
                     <a href="{{ route('admin.invoice')}}" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
                        {{ request()->routeIs('admin.invoice') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
-                        <img class="w-5 h-5" src="{{ asset('img/invoice.png') }}" alt="Invoice"> Invoice
+                        <img class="w-5 h-5" src="{{ asset('img/invoice.png') }}" alt="Invoice"> Invoice Items
                     </a>
                     <a href="{{ route('admin.records')}}" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
                        {{ request()->routeIs('admin.records') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
                         <img class="w-5 h-5" src="{{ asset('img/invoice_history.png') }}" alt="Invoice Records"> Records
+                    </a>
+                     <a href="{{ route('admin.summary-records')}}" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
+                       {{ request()->routeIs('admin.summary-records') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <img class="w-5 h-5" src="{{ asset('img/invoice_history.png') }}" alt="Summary Records">Billing Summary Records
+                    </a>
+                       <a href="{{ route('admin.soa-record')}}" class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
+                       {{ request()->routeIs('admin.soa-record') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <img class="w-5 h-5" src="{{ asset('img/invoice_history.png') }}" alt="Summary Records">SOA Records
                     </a>
                 </div>
             </div>
@@ -101,7 +109,7 @@
             <div class="mt-4">
                 <button @click="openUsers = !openUsers"
                         class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition
-                        {{ request()->routeIs('admin.auth.*') || request()->routeIs('admin.profile-settings') || request()->routeIs('admin.system-users') || request()->routeIs('admin.register-user') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        {{ request()->routeIs('admin.auth.*') || request()->routeIs('admin.profile-settings') || request()->routeIs('system-users.index.index') || request()->routeIs('admin.register-user') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
                     <span class="flex items-center gap-2">
                         <img class="w-5 h-5" src="{{ asset('img/settings.png') }}" alt="Settings"> Settings
                     </span>
@@ -117,19 +125,14 @@
                         Profile Settings
                     </a>
 
-                    <a href="{{ route('admin.system-users') }}"
+                    <a href="{{ route('admin.system.users') }}"
                        class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
-                       {{ request()->routeIs('admin.system-users') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                       {{ request()->routeIs('admin.system.users') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
                         <img class="w-5 h-5" src="{{ asset('img/system-users.png') }}" alt="Profile">
                         System Users
                     </a>
 
-                    <a href="{{ route('admin.register-user') }}"
-                       class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition
-                       {{ request()->routeIs('admin.register-user') ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-100' }}">
-                        <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-600">New</span>
-                        Register New User
-                    </a>
+                   
                 </div>
             </div>
 

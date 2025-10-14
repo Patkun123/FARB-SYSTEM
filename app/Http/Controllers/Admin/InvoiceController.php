@@ -91,7 +91,7 @@ class InvoiceController extends Controller
                 'client_department_id' => $validated['client_department_id'],
                 'invoice_date' => $validated['invoice_date'],
                 'internal_department' => $validated['internal_department'],
-                'description' => 'Manual invoice creation',
+                'description' => null,
                 'total_amount' => $total,
                 'status' => 'pending',
             ]);

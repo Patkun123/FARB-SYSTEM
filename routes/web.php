@@ -9,8 +9,18 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\AdminRegisterController;
 use App\Http\Controllers\Auth\StatementOfAccountController;
+use App\Http\Controllers\Admin\SystemUserController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\ReceivableController;
+use App\Http\Controllers\Admin\InvoicePaymentController;
+use App\Http\Controllers\Admin\PaymentRecordController;
+use App\Http\Controllers\Admin\SummaryRecordController;
+use App\Http\Controllers\Admin\InvoiceMailerController;
+
+
+
+
 
 // Public
 Route::get('/', function () {
@@ -35,17 +45,19 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         return view('admin.dashboard');
     })->name('dashboard');
 
-     Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+    //clients.blade.php
+    Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
     Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
     Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
     Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
 
-
-     Route::get('billing', [BillingController::class, 'index'])->name('billing');
+    //billing.blade.php  routes
+    Route::get('billing', [BillingController::class, 'index'])->name('billing');
     Route::get('billing/clients', [BillingController::class, 'clients'])->name('billing.clients');
     Route::get('billing/departments', [BillingController::class, 'departments'])->name('billing.departments');
-    Route::get('billing/summaries', [BillingController::class, 'getBillingSummaries'])->name('billing.summaries');
-    Route::post('billing/store', [BillingController::class, 'store'])->name('billing.store');
+    Route::get('billing/summaries', [BillingController::class, 'getBillingSummaries'])
+    ->name('billing.getBillingSummaries');
+     Route::post('billing/store', [BillingController::class, 'store'])->name('billing.store');
 
 
     //route for billing-summary.blade.php
@@ -55,8 +67,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::post('/billing-summary/save', [BillingSummaryController::class, 'store'])
     ->name('billing-summary.save');
 
-    //route for invoice.blade.php
 
+
+    //route for invoice.blade.php
     Route::get('/invoice', [InvoiceController::class, 'index'])->name('invoice');
     Route::get('/invoice/clients', [InvoiceController::class, 'getClients'])->name('invoice.clients');
     Route::get('/invoice/departments/{clientId}', [InvoiceController::class, 'getDepartments'])->name('invoice.departments');
@@ -68,15 +81,49 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         return view('admin.records');
     })->name('records');
 
-      // Receivables
 
-        Route::get('/receive-payment', function () {
-            return view('admin.receive-payment');
-        })->name('receive-payment');
 
-        Route::get('/receivable-records', function () {
-            return view('admin.receivable-records');
-        })->name('receivable-records');
+Route::get('/summary-records', function () {
+        return view('admin.summary-records');
+    })->name('summary-records');
+  Route::get('/summary-records/api', [SummaryRecordController::class, 'index'])
+        ->name('summary-records.api');
+
+    
+    Route::get('/soa-record', function () {
+        return view('admin.soa-record');
+    })->name('soa-record');
+     Route::get('/invoices', [InvoiceMailerController::class, 'index'])->name('admin.invoices.index');
+
+
+// Routes for billing summaries
+Route::prefix('billing')->group(function () {
+    Route::get('/summaries', [SummaryRecordController::class, 'index'])->name('billing.index');
+    Route::post('/summaries', [SummaryRecordController::class, 'store'])->name('billing.store');
+    Route::get('/summaries/{id}', [SummaryRecordController::class, 'show'])->name('billing.show');
+    Route::put('/summaries/{id}', [SummaryRecordController::class, 'update'])->name('billing.update');
+    Route::delete('/summaries/{id}', [SummaryRecordController::class, 'destroy'])->name('billing.destroy');
+
+    // Additional endpoints
+    Route::get('/summaries/{id}/totals', [SummaryRecordController::class, 'getTotals'])->name('billing.totals');
+    Route::get('/summaries/{id}/employees', [SummaryRecordController::class, 'getEmployees'])->name('billing.employees');
+});
+        //receive receive-payment.blade.php store code and load data 
+   
+   // Blade page
+    Route::get('/receive-payment', function () {
+    return view('admin.receive-payment');
+    })->name('receive-payment');
+Route::post('/receive-payment', [InvoicePaymentController::class, 'storePayment'])
+    ->name('receive-payment.store');
+Route::get('/receive-payment/api/invoices', [InvoicePaymentController::class, 'index'])
+    ->name('receive-payment.api.invoices');
+  
+        //receivable records
+    Route::get('/receivable-records', [PaymentRecordController::class, 'index'])->name('receivable-records');
+    Route::get('/receivable-payments/{id}/edit', [PaymentRecordController::class, 'edit'])->name('receivable-payments.edit');
+    Route::put('/receivable-payments/{id}', [PaymentRecordController::class, 'update'])->name('receivable-payments.update');
+    Route::delete('/receivable-payments/{id}', [PaymentRecordController::class, 'destroy'])->name('receivable-payments.destroy');
 
 
     // Settings / Users
@@ -89,12 +136,20 @@ Route::get('/auth/profile-settings', function () {
 
     //route for system-users.blade.php
     //MANAGE
-    Route::get('/system-users', function () {
-        return view('admin.system-users');
-    })->name('system.users');
-    Route::get('/system-users', function () {
-    return view('admin.system-users');
-    })->name('system-users');
+// Display all system users
+    Route::get('/system-users', [SystemUserController::class, 'index'])
+        ->name('system.users');
+
+    // Fetch a single user (for AJAX editing)
+    Route::get('/system-users/{user}', [SystemUserController::class, 'show'])
+        ->name('system.users.show');
+    // Update a user
+    Route::put('/system-users/{user}', [SystemUserController::class, 'update'])
+        ->name('system.users.update');
+    // Delete a user
+    Route::delete('/system-users/{user}', [SystemUserController::class, 'destroy'])
+        ->name('system.users.destroy');
+
 
 
     //route for change-password.blade.php
