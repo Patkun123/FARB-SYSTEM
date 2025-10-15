@@ -55,8 +55,8 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::get('billing', [BillingController::class, 'index'])->name('billing');
     Route::get('billing/clients', [BillingController::class, 'clients'])->name('billing.clients');
     Route::get('billing/departments', [BillingController::class, 'departments'])->name('billing.departments');
-    Route::get('billing/summaries', [BillingController::class, 'getBillingSummaries'])
-    ->name('billing.getBillingSummaries');
+    Route::get('billing/summaries', [BillingController::class, 'getBillingSummaries'])->name('billing.getBillingSummaries');
+    Route::post('billing/store', [BillingController::class, 'store'])->name('billing.store');
      Route::post('billing/store', [BillingController::class, 'store'])->name('billing.store');
 
 
@@ -96,18 +96,6 @@ Route::get('/summary-records', function () {
      Route::get('/invoices', [InvoiceMailerController::class, 'index'])->name('admin.invoices.index');
 
 
-// Routes for billing summaries
-Route::prefix('billing')->group(function () {
-    Route::get('/summaries', [SummaryRecordController::class, 'index'])->name('billing.index');
-    Route::post('/summaries', [SummaryRecordController::class, 'store'])->name('billing.store');
-    Route::get('/summaries/{id}', [SummaryRecordController::class, 'show'])->name('billing.show');
-    Route::put('/summaries/{id}', [SummaryRecordController::class, 'update'])->name('billing.update');
-    Route::delete('/summaries/{id}', [SummaryRecordController::class, 'destroy'])->name('billing.destroy');
-
-    // Additional endpoints
-    Route::get('/summaries/{id}/totals', [SummaryRecordController::class, 'getTotals'])->name('billing.totals');
-    Route::get('/summaries/{id}/employees', [SummaryRecordController::class, 'getEmployees'])->name('billing.employees');
-});
         //receive receive-payment.blade.php store code and load data 
    
    // Blade page
@@ -173,28 +161,6 @@ Route::middleware(['auth'])->prefix('billing')->name('billing.')->group(function
         return view('billing.dashboard');
     })->name('dashboard');
 
-    Route::get('/auth/profile-settings', function () {
-        $user = Auth::user();
-        return view('billing.auth.profile-settings', compact('user'));
-    })->name('profile-settings');
-    
-    
-    //billing page billing/billing.blade.php
-        Route::get('/billing', function () {
-            return view('billing.billing');
-        })->name('billing');
-
-        Route::get('/billing', function () {
-            return view('billing.invoice');
-        })->name('invoice');
-
-
-        Route::get('/billing-summary', function () {
-            return view('billing.billing-summary');
-        })->name('billing-summary');
-
-        Route::post('/billing-summary/save', [BillingSummaryController::class, 'store'])
-        ->name('billing-summary.save');
         
 
 
